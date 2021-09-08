@@ -47,7 +47,7 @@ class CloudCollectorLibcloud(CloudCollector):
         )
 
         logging.info("logging config for {} driver type".format(self.config['driver']))
-        return self.driver
+        return self.config
 
     def _fetch(self, collect):
         data = []

@@ -6,6 +6,7 @@
 * secret
 * driver
 * driver_params
+* driver_lb
 
 # Collecting for VMs (type: vm)
 
@@ -21,5 +22,17 @@
 * private_ip
 * status
 * is_on
+* tags
+
+# Collecting for LoadBalancer (type: lb)
+
+* id
+* name
+* cluster
+* project
+* ip
+* port
+* instances
+* status
 * tags
  
