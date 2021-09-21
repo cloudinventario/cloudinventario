@@ -7,6 +7,7 @@
 * driver
 * driver_params
 * driver_lb
+* driver_storage
 
 # Collecting for VMs (type: vm)
 
@@ -36,3 +37,11 @@
 * status
 * tags
  
+# Collecting for Storage (type: storage)
+
+* name
+* driver
+* cluster
+* project
+* objects
+

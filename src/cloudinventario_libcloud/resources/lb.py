@@ -13,9 +13,6 @@ class CloudInventarioLB(CloudInvetarioResource):
 
     def __init__(self, resource, collector):
         super().__init__(resource, collector)
-    
-    def _is_not_primitive(self, obj):
-        return hasattr(obj, '__dict__')
 
     def _login(self, config):
         self.config = config
@@ -56,22 +53,7 @@ class CloudInventarioLB(CloudInvetarioResource):
         return instances
 
     def _process_resource(self, balancer):
-        # To check if some attribute is object (or array of object) to give every information
-        for key in balancer["extra"]:
-            item = balancer["extra"][key]
-            # If field is object
-            if self._is_not_primitive(item):
-                attributes = dict()
-                for attribute in item.__dict__.items():
-                    attributes[attribute[0]] = attribute[1]
-                balancer["extra"][key] = str(attributes)
-            # If field is array of object (need to check first item other will be the same type as first one)
-            elif isinstance(item, list) and len(item) > 0 and self._is_not_primitive(item[0]):
-                for object in item:
-                    attributes = dict()
-                    for attribute in object.__dict__.items():
-                        attributes[attribute[0]] = attribute[1]
-                    balancer["extra"][key] = str(attributes)
+        balancer = self.collector._object_to_dict(balancer)
 
         logging.info("new LoadBalancer name={}".format(balancer["name"]))
         data = {
