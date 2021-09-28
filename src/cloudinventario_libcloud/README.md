@@ -8,6 +8,7 @@
 * driver_params
 * driver_lb
 * driver_storage
+* driver_container
 
 # Collecting for VMs (type: vm)
 
@@ -44,4 +45,15 @@
 * cluster
 * project
 * objects
+
+# Collecting for Container (type: container)
+
+* id
+* name
+* cluster
+* project
+* state
+* image
+* public_ip
+* is_on
 

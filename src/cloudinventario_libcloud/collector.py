@@ -74,7 +74,6 @@ class CloudCollectorLibcloud(CloudCollector):
         for instance in instances:
             # Process instance
             data.append(self._process_vm(instance.__dict__))
-        # [self._process_vm(instance) for instance in instances]
 
         logging.info("Collected {} vm".format(len(data)))
         return data
