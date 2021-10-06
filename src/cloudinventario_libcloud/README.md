@@ -56,4 +56,3 @@
 * image
 * public_ip
 * is_on
-

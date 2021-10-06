@@ -70,6 +70,7 @@ class CloudInventarioStorage(CloudInvetarioResource):
             "name": storage["name"],
             "cluster": self.collector.zone,
             "project": self.collector.project_name,
+            "driver": storage['driver'],
             "objects": storage["objects"]
             }
 
