@@ -20,8 +20,9 @@ class CloudInventarioContainer(CloudInvetarioResource):
     def _login(self, config):
         self.config = config
         # self.config = self.collector.config
+        self.driver = self.config['driver']['driver_container']
 
-        Container = ct_get_driver(self.config['driver_container'])
+        Container = ct_get_driver(self.driver)
         self.ct_driver = Container(
             self.config['key'],
             self.config['secret'],
@@ -29,7 +30,7 @@ class CloudInventarioContainer(CloudInvetarioResource):
             **self.config['driver_params']
         )
 
-        logging.info("logging config for container with driver {}".format(self.config['driver_lb']))
+        logging.info("logging config for container with driver {}".format(self.driver))
 
     def _fetch(self):
         data = []
