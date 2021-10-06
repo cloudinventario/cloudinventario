@@ -31,6 +31,24 @@ class CloudCollectorLibcloud(CloudCollector):
     def _is_not_primitive(self, obj):
         return hasattr(obj, '__dict__')
 
+    def _object_to_dict(self, obj):
+        for key in obj["extra"]:
+            items = obj["extra"][key]
+            # If field is obj
+            if self._is_not_primitive(items):
+                attributes = dict()
+                for attribute in items.__dict__.itemss():
+                    attributes[attribute[0]] = attribute[1]
+                obj["extra"][key] = str(attributes)
+            # If field is array of obj (need to check first items other will be the same type as first one)
+            elif isinstance(items, list) and len(items) > 0 and self._is_not_primitive(items[0]):
+                for item in items:
+                    attributes = dict()
+                    for attribute in item.__dict__.items():
+                        attributes[attribute[0]] = attribute[1]
+                    obj["extra"][key] = str(attributes)
+        return obj
+
     def _login(self):
         # Get zone or region for cluster field
         self.zone = self.config['driver_params']['zone'] if 'zone' in self.config['driver_params'] else self.config[
@@ -47,7 +65,7 @@ class CloudCollectorLibcloud(CloudCollector):
         )
 
         logging.info("logging config for {} driver type".format(self.config['driver']))
-        return self.driver
+        return self.config
 
     def _fetch(self, collect):
         data = []
@@ -56,28 +74,13 @@ class CloudCollectorLibcloud(CloudCollector):
         for instance in instances:
             # Process instance
             data.append(self._process_vm(instance.__dict__))
-        # [self._process_vm(instance) for instance in instances]
 
         logging.info("Collected {} vm".format(len(data)))
         return data
 
     def _process_vm(self, rec):
         # To check if some attribute is object (or array of object) to give every information
-        for key in rec["extra"]:
-            item = rec["extra"][key]
-            # If field is object
-            if self._is_not_primitive(item):
-                attributes = dict()
-                for attribute in item.__dict__.items():
-                    attributes[attribute[0]] = attribute[1]
-                rec["extra"][key] = str(attributes)
-            # If field is array of object (need to check first item other will be the same type as first one)
-            elif isinstance(item, list) and len(item) > 0 and self._is_not_primitive(item[0]):
-                for object in item:
-                    attributes = dict()
-                    for attribute in object.__dict__.items():
-                        attributes[attribute[0]] = attribute[1]
-                    rec["extra"][key] = str(attributes)
+        rec = self._object_to_dict(rec)
 
         logging.info("new VM name={}".format(rec["name"]))
         vm_data = {
