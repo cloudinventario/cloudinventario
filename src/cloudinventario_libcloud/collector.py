@@ -1,4 +1,4 @@
-import logging
+import logging, re
 from pprint import pprint
 
 from libcloud.compute.providers import get_driver
@@ -21,7 +21,7 @@ class CloudCollectorLibcloud(CloudCollector):
         return {
             key: 'First parameters which can be access_key or client_email, Required',
             secret: 'Second parameters which can be secret_key or private_key, Required',
-            driver: 'Driver type for gcp (gce), aws (ec2), Required',
+            driver: 'Driver contains type for driver VM, LB, Storage, Container, Required',
             driver_params: 'Additional parameters needed for driver',
         }
 
@@ -54,52 +54,12 @@ class CloudCollectorLibcloud(CloudCollector):
         self.zone = self.config['driver_params']['zone'] if 'zone' in self.config['driver_params'] else self.config[
             'driver_params']['region'] if 'region' in self.config['driver_params'] else None
         self.project_name = self.config['driver_params'].get('project')
-        # Load driver to get provider
-        ComputeEngine = get_driver(self.config['driver'])
 
-        self.driver = ComputeEngine(
-            self.config['key'],
-            self.config['secret'],
-            # Pass every additional attribute as dict into computeEngine
-            **self.config['driver_params']
-        )
-
-        logging.info("logging config for {} driver type".format(self.config['driver']))
+        logging.info("logging config LibCloud drivers as {}".format(re.sub("[\{\}']", '', str(self.config['driver']))))
         return self.config
 
-    def _fetch(self, collect):
-        data = []
-        instances = self.driver.list_nodes()
-
-        for instance in instances:
-            # Process instance
-            data.append(self._process_vm(instance.__dict__))
-
-        logging.info("Collected {} vm".format(len(data)))
-        return data
-
-    def _process_vm(self, rec):
-        # To check if some attribute is object (or array of object) to give every information
-        rec = self._object_to_dict(rec)
-
-        logging.info("new VM name={}".format(rec["name"]))
-        vm_data = {
-            "id": rec["id"],
-            "created": rec["created_at"],
-            "name": rec["name"],
-            "size": rec["size"],
-            "image": rec["image"],
-            "cluster": self.zone,
-            "project": self.project_name,
-            "primary_ip": rec["public_ips"][0] if len(rec["public_ips"]) > 0 else None,
-            "public_ip": rec["public_ips"],
-            "private_ip": rec["private_ips"],
-            "status": rec["state"],
-            "is_on": rec["state"].lower() == 'running',
-            "tags": rec["extra"]['labels'] if 'labels' in rec["extra"] else rec["extra"].get('tags'),
-        }
-
-        return self.new_record('vm', vm_data, rec)
+    def _fetch(self, collector):
+        return []
 
     def _logout(self):
         self.driver = None

@@ -17,8 +17,9 @@ class CloudInventarioLB(CloudInvetarioResource):
     def _login(self, config):
         self.config = config
         # self.config = self.collector.config
+        self.driver = self.config['driver']['driver_lb']
 
-        LoadBalancer = lb_get_driver(self.config['driver_lb'])
+        LoadBalancer = lb_get_driver(self.driver)
         self.lb_driver = LoadBalancer(
             self.config['key'],
             self.config['secret'],
@@ -26,7 +27,7 @@ class CloudInventarioLB(CloudInvetarioResource):
             **self.config['driver_params']
         )
 
-        logging.info("logging config for LoadBalancer with driver {}".format(self.config['driver_lb']))
+        logging.info("logging config for LoadBalancer with driver {}".format(self.driver))
 
     def _fetch(self):
         data = []
