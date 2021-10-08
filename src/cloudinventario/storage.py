@@ -113,7 +113,7 @@ class InventoryStorage:
 
      self.dns_domain = sa.Table(TABLE_PREFIX + 'dns_domain', meta,
        sa.Column('id', sa.String),
-       sa.Column('domain', sa.String ),# , primary_key=True, nullable=True),
+       sa.Column('domain', sa.String ),
        sa.Column('domain_type', sa.String),
        sa.Column('ttl', sa.String),
 
@@ -123,7 +123,6 @@ class InventoryStorage:
 
        sa.Column('attributes', sa.Text),
        sa.Column('details', sa.Text),
-      #  sa.UniqueConstraint('domain')
      )
 
      meta.create_all(self.engine, checkfirst = True)
@@ -200,6 +199,7 @@ class InventoryStorage:
        source["runtime"] = runtime
        sources_save.append(source)
      
+     # Uses dict to sorting data by their type, now only dns_record, dns_domain
      data_to_insert = dict()
      # to work normaly with every type of data (vm, storage...) remove *this
      data_to_insert['inventory_table'] = []

@@ -32,19 +32,17 @@ class CloudInventarioDNS(CloudInvetarioResource):
         
     def _fetch(self):
             data = []
-            record_data = []
             dns_s = self.driver_dns.list_zones()
 
             for dns in dns_s:
                 # Process record
                 records = self.driver_dns.list_records(dns)
                 for record in records:
-                    record_data.append(self._process_record(record.__dict__))
+                    data.append(self._process_record(record.__dict__))
 
                 # Process domain/zone
                 data.append(self._process_dns(dns.__dict__))
 
-            data += record_data
             logging.info("Collected {} dns".format(len(data)))
             return data
 
@@ -60,7 +58,6 @@ class CloudInventarioDNS(CloudInvetarioResource):
             "domain": record["zone"].domain,
             "ttl": record["ttl"],
         }
-
         return self.new_record('dns_record', data, record)
 
     def _process_dns(self, dns):
@@ -73,7 +70,6 @@ class CloudInventarioDNS(CloudInvetarioResource):
             'domain_type': dns["type"],
             'ttl': dns["ttl"],
         }
-
         return self.new_record('dns_domain', data, dns)
 
     def _logout(self):
