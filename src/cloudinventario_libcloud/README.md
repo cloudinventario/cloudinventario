@@ -9,6 +9,7 @@
     * driver_lb
     * driver_storage
     * driver_container
+    * driver_dns
 * driver_params
 
 # Collecting for VMs (type: vm)
@@ -57,3 +58,19 @@
 * image
 * public_ip
 * is_on
+
+# Collecting for DNS (type: dns)
+
+## dns_domain
+* id
+* domain
+* domain_type
+* ttl
+
+## dns_record
+* id
+* name
+* record_type
+* data
+* domain
+* ttl
