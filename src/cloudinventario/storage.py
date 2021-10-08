@@ -2,6 +2,7 @@ import logging, re
 from pprint import pprint
 from datetime import datetime, timedelta
 from sqlalchemy.pool import NullPool
+import json
 
 import sqlalchemy as sa
 
@@ -93,6 +94,38 @@ class InventoryStorage:
        sa.UniqueConstraint('version', 'source', 'type', 'name', "cluster", 'project', 'id')
      )
 
+     self.dns_record = sa.Table(TABLE_PREFIX + 'dns_record', meta,
+       sa.Column('id', sa.String),
+       sa.Column('name', sa.String),
+       sa.Column('record_type', sa.String),
+       sa.Column('domain', sa.String),
+       sa.Column('ttl', sa.String),
+
+       sa.Column('type', sa.String),
+       sa.Column('source', sa.String),
+       sa.Column('version', sa.Integer),
+
+       sa.Column('data', sa.Text),
+
+       sa.Column('attributes', sa.Text),
+       sa.Column('details', sa.Text),
+     )
+
+     self.dns_domain = sa.Table(TABLE_PREFIX + 'dns_domain', meta,
+       sa.Column('id', sa.String),
+       sa.Column('domain', sa.String ),# , primary_key=True, nullable=True),
+       sa.Column('domain_type', sa.String),
+       sa.Column('ttl', sa.String),
+
+       sa.Column('type', sa.String),
+       sa.Column('source', sa.String),
+       sa.Column('version', sa.Integer),
+
+       sa.Column('attributes', sa.Text),
+       sa.Column('details', sa.Text),
+      #  sa.UniqueConstraint('domain')
+     )
+
      meta.create_all(self.engine, checkfirst = True)
      return True
 
@@ -166,6 +199,19 @@ class InventoryStorage:
        source["status"] = STATUS_OK
        source["runtime"] = runtime
        sources_save.append(source)
+     
+     data_to_insert = dict()
+     # to work normaly with every type of data (vm, storage...) remove *this
+     data_to_insert['inventory_table'] = []
+     for item in data:
+       # * from 
+       if item['type'] != 'dns_domain' and item['type'] != 'dns_record':
+         data_to_insert['inventory_table'].append(item)
+       else:
+       # * to 
+        if item['type'] not in data_to_insert:
+          data_to_insert[item['type']] = []
+        data_to_insert[item['type']].append(dict(item, **json.loads(item['attributes'])))
 
      if len(sources) == 0:
        return False
@@ -173,7 +219,9 @@ class InventoryStorage:
      # store data
      with self.engine.begin() as conn:
        conn.execute(self.source_table.insert(), sources_save)
-       conn.execute(self.inventory_table.insert(), data)
+       conn.execute(self.dns_record.insert(), data_to_insert['dns_record']) if 'dns_record' in data_to_insert else None
+       conn.execute(self.dns_domain.insert(), data_to_insert['dns_domain']) if 'dns_domain' in data_to_insert else None
+       conn.execute(self.inventory_table.insert(), data_to_insert['inventory_table']) if 'dns_record' in data_to_insert else None
      return True
 
    def cleanup(self, days):
@@ -193,6 +241,14 @@ class InventoryStorage:
          conn.execute(self.source_table.delete().where(
                (self.source_table.c.source == row["source"]) &
                   (self.source_table.c.version == row["version"])
+           ))
+         conn.execute(self.dns_record.delete().where(
+               (self.dns_record.c.source == row["source"]) &
+                  (self.dns_record.c.version == row["version"])
+           ))
+         conn.execute(self.dns_domain.delete().where(
+               (self.dns_domain.c.source == row["source"]) &
+                  (self.dns_domain.c.version == row["version"])
            ))
      return True
 
