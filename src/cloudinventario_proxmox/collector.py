@@ -48,10 +48,10 @@ class CloudCollectorProxmox(CloudCollector):
   def _fetch(self, collect):
     data = []
 
-    # Get node from proxmox
+    # Get node
     nodes = self.proxmox.cluster.resources.get(type='node')
 
-    # Get all types of vm (qemu, lxc, openvz...) from proxmox
+    # Get vm, container (qemu, lxc, openvz...)
     vms = self.proxmox.cluster.resources.get(type='vm')
 
     records = vms + nodes
@@ -62,32 +62,27 @@ class CloudCollectorProxmox(CloudCollector):
     return data
 
   def _process_vm(self, rec):
-    record_type = {
-      'lxc': 'container',
-      'gemu': 'vm',
-      'node': 'node',
-    }
-    logging.info("new {} node={} name={}".format(rec['type'], rec["node"], rec.get("name")))
-
+    # Load additional data (disks, networks, storages)
     rec["disks_list"] = self.proxmox.get(f'nodes/{rec["node"]}/disks/list')
     rec["network"] = self.proxmox.get(f'nodes/{rec["node"]}/network')
     rec["storages"] = self.proxmox.get(f'nodes/{rec["node"]}/storage')
-    storage = sum([storage.get('total') for storage in rec.get('storages', [])])
 
+    # Sum and conversion to GB
+    GB = (10**-9)
+    storage = sum([storage.get('total') for storage in rec.get('storages', [])]) * GB
+    maxmem = rec['maxmem'] * GB if 'maxmem' in rec else 0
+    maxdisk = rec['maxdisk'] * GB if 'maxdisk' in rec else 0
+
+    logging.info("new {} node={} name={}".format(rec['type'], rec["node"], rec.get("name")))
     vm_data = {
-      # "cluster": rec["vdcName"],
-      # "description": rec.get("Description"),
-      # "os": rec["guestOs"],
-      # "owner": rec["ownerName"],
-
       "created": rec.get("uptime"),
       "id": rec.get("id"),
       "project": rec.get("node"),
       "name": rec.get("name"),
       "cpus": rec.get("maxcpu"),
       "type": rec.get("type"),
-      "memory": rec.get("maxmem"),
-      "disks": rec.get("maxdisks"),
+      "memory": maxmem,
+      "disks": maxdisk,
       "networks": rec.get("network"),
       "primary_ip": rec.get("network")[0].get("address"),
       "storage": storage,
@@ -95,7 +90,18 @@ class CloudCollectorProxmox(CloudCollector):
       "status": rec.get("status"),
       "is_on": 1 if rec.get("status") == 'running' else 0, 
     }
+    # NOT MAPPED
+      # "cluster": rec["vdcName"],
+      # "description": rec.get("Description"),
+      # "os": rec["guestOs"],
+      # "owner": rec["ownerName"],
 
+    # Get real type of record (vm, container, node)
+    record_type = {
+      'lxc': 'container',
+      'qemu': 'vm',
+      'node': 'node',
+    }
     type = record_type[rec['type']] if rec.get("type") in record_type else rec.get("type")
     return self.new_record(type, vm_data, rec)
 
