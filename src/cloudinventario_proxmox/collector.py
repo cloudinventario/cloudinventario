@@ -83,15 +83,15 @@ class CloudCollectorProxmox(CloudCollector):
             "active": storage.get('active'),
             "type": storage.get('type'),
             "content": storage.get('content'),
-            "capacity": storage.get('total') * MB if 'total' in rec else 0,
-            "used": storage.get('used') * MB if 'used' in rec else 0,
-            "free": storage.get('avail') * MB if 'avail' in rec else 0,
+            "capacity": storage.get('total', 0) * MB if 'total' in rec else 0,
+            "used": storage.get('used', 0) * MB if 'used' in rec else 0,
+            "free": storage.get('avail', 0) * MB if 'avail' in rec else 0,
         } for storage in self.proxmox.get(f'nodes/{rec["node"]}/storage')]
 
         # Sum and conversion to MB
-        storage = sum([storage.get('capacity') for storage in rec.get('storages', [])]) * MB if len(rec.get('storages', [])) > 0 else 0
-        maxmem = rec['maxmem'] * MB if 'maxmem' in rec else 0
-        maxdisk = rec['maxdisk'] * MB if 'maxdisk' in rec else 0
+        storage = sum([storage.get('capacity', 0) for storage in rec.get('storages', [])]) * MB if len(rec.get('storages', [])) > 0 else 0
+        maxmem = rec.get('maxmem', 0) * MB if 'maxmem' in rec else 0
+        maxdisk = rec.get('maxdisk',0) * MB if 'maxdisk' in rec else 0
 
         logging.info("new {} node={} name={}".format(
             rec['type'], rec["node"], rec.get("name")))
@@ -105,7 +105,7 @@ class CloudCollectorProxmox(CloudCollector):
             "memory": maxmem,
             "disks": maxdisk,
             "networks": rec.get("network"),
-            "primary_ip": rec.get("network")[0].get("address"),
+            "primary_ip": rec.get("network")[0].get("address") if len(rec.get("network"), []) > 0 else None,
             "storage": storage,
             "storages": rec.get("storages"),
             "status": rec.get("status"),
