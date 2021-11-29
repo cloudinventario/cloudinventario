@@ -221,7 +221,7 @@ class InventoryStorage:
        conn.execute(self.source_table.insert(), sources_save)
        conn.execute(self.dns_record.insert(), data_to_insert['dns_record']) if 'dns_record' in data_to_insert else None
        conn.execute(self.dns_domain.insert(), data_to_insert['dns_domain']) if 'dns_domain' in data_to_insert else None
-       conn.execute(self.inventory_table.insert(), data_to_insert['inventory_table']) if 'dns_record' in data_to_insert else None
+       conn.execute(self.inventory_table.insert(), data_to_insert['inventory_table'])
      return True
 
    def cleanup(self, days):

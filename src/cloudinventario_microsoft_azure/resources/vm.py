@@ -1,6 +1,10 @@
 import concurrent.futures
 from copy import Error
-import logging, re, sys, asyncio, time
+import logging
+import re
+import sys
+import asyncio
+import time
 from pprint import pprint
 from typing import Dict, List
 import datetime
@@ -49,16 +53,18 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
                 credential=credentials, subscription_id=subscription_id
             )
 
-            logging.info("logging in AzureVM={}".format(self.collector.tenant_id))
+            logging.info("logging in AzureVM={}".format(
+                self.collector.tenant_id))
 
             return True
         except Error as e:
             logging.error(e)
             return False
-        
+
     def _fetch(self) -> List[Dict]:
         data: List = []
-        list_of_virtual_machines = list(self.compute_client.virtual_machines.list_all())
+        list_of_virtual_machines = list(
+            self.compute_client.virtual_machines.list_all())
 
         resources = list(self.resource_client.resources.list())
 
@@ -80,7 +86,8 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
 
         vm_dict: Dict = vm.as_dict()
 
-        created_time: datetime.datetime = self.__get_created_time(resources, vm_dict)
+        created_time: datetime.datetime = self.__get_created_time(
+            resources, vm_dict)
         group_name: str = self.__get_resource_group_name(vm_dict['id'])
 
         vm_size: str = vm_dict['hardware_profile']['vm_size']
@@ -88,13 +95,16 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
 
         disks: List = self.__get_disks(group_name, vm_dict)
 
-        os_disk_id = vm_dict.get('storage_profile').get('os_disk').get('managed_disk').get('id')
+        os_disk_id = vm_dict.get('storage_profile').get(
+            'os_disk').get('managed_disk').get('id')
         os_disk_size = self.__get_os_disk_size(disks, os_disk_id)
 
-        instance_view: Dict = self.__get_vm_instance_view(group_name, vm_dict['name'])
+        instance_view: Dict = self.__get_vm_instance_view(
+            group_name, vm_dict['name'])
 
-        networks, private_ip_address, public_ip_address = self.__get_networks_info(group_name, vm_dict)
-  
+        networks, private_ip_address, public_ip_address = self.__get_networks_info(
+            group_name, vm_dict)
+
         vm_data = {
             "created": created_time,
             "name": vm_dict.get('name'),
@@ -102,7 +112,7 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
             "location": vm_dict.get('location'),
             "project": group_name,
             "description": "",
-            "id": vm_dict.get('vm_id'), 
+            "id": vm_dict.get('vm_id'),
             "type": vm_size,
             "cpus": vm_info.get("number_of_cores"),
             "memory": vm_info.get("memory_in_mb"),
@@ -120,7 +130,8 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
             "os_family": None,
             "status": instance_view.get('statuses')[1].get('display_status'),
             "is_on": (
-                instance_view.get('statuses')[1].get('display_status') == "VM running" and 1 or 0
+                instance_view.get('statuses')[1].get(
+                    'display_status') == "VM running" and 1 or 0
             ),
             "tags": vm_dict.get('tags') or [],
         }
@@ -137,11 +148,11 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
 
         self.resource_client.close()
         self.resource_client = None
-        
+
         self.network_client.close()
         self.network_client = None
 
-    def __get_created_time(self, resources: List[GenericResourceExpanded] = None, vm_dict: VirtualMachine = None ) -> datetime.datetime:
+    def __get_created_time(self, resources: List[GenericResourceExpanded] = None, vm_dict: VirtualMachine = None) -> datetime.datetime:
         """Get and return time of resource creation.
 
         :param resources: List - all resources included in resource client
@@ -163,13 +174,13 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
         :return: Dict - virtual machine info
         """
         vm_sizes_in_location = list(
-            self.compute_client.virtual_machine_sizes.list(vm_dict.get('location'))
+            self.compute_client.virtual_machine_sizes.list(
+                vm_dict.get('location'))
         )
         vm_info = [
             _vm_size for _vm_size in vm_sizes_in_location if _vm_size.name == vm_dict.get('hardware_profile').get('vm_size')
         ][0]
         return vm_info.as_dict()
-
 
     def __get_disks(self, group_name: str = None, vm_dict: Dict = None) -> List[Dict]:
         """Get and return all disks included to (managed by) given virtual machine.
@@ -178,8 +189,9 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
         :param vm_dict: Dict - virtual machine data in dictionary form 
         :return: List[Dict] - OS and data disk informations in dictionary form
         """
-        return [ 
-            self.__get_dict_with_details(disk.as_dict(), self.__create_disks_details(vm_dict, disk.as_dict()))
+        return [
+            self.__get_dict_with_details(
+                disk.as_dict(), self.__create_disks_details(vm_dict, disk.as_dict()))
             for disk in self.compute_client.disks.list_by_resource_group(group_name)
         ]
 
@@ -193,7 +205,7 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
         :return: Dict - modified given dictionary _dict
         """
         _dict['details_from_vm'] = details
-        return _dict         
+        return _dict
 
     def __create_disks_details(self, vm_dict: Dict = None, disk_dict: Dict = None) -> List[Dict]:
         """Creates details of virtual machine disks.
@@ -207,13 +219,13 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
         """
         disk_id = disk_dict.get('id')
 
-        disks_specs = list( vm_dict.get('storage_profile').get('data_disks') )
-        disks_specs.append( vm_dict.get('storage_profile').get('os_disk') )
+        disks_specs = list(vm_dict.get('storage_profile').get('data_disks'))
+        disks_specs.append(vm_dict.get('storage_profile').get('os_disk'))
 
         for disk_specs in disks_specs:
             if self.__check_resource_and_vm_id(disk_specs.get('managed_disk').get('id'), disk_id):
                 return disk_specs
-        
+
         return None
 
     def __get_os_disk_size(self, disks: List[Dict] = [], id_to_search: str = None) -> int:
@@ -278,14 +290,14 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
         is capitalized. That could throw some errors in future.
 
         Because of that is group_name rechecked with lower case too.
-        
+
         :param str group_name: group name of the given resource
         :param str vm_name: name of virtual machine
         :return: Dict - instance view of given virtual machine
         """
-        return self.compute_client.virtual_machines.instance_view(\
-           resource_group_name=group_name, 
-           vm_name=vm_name
+        return self.compute_client.virtual_machines.instance_view(
+            resource_group_name=group_name,
+            vm_name=vm_name
         ).as_dict()
 
     def __get_networks_info(self, group_name: str = None, vm_dict: Dict = None) -> tuple:
@@ -304,7 +316,7 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
             resource_group_name=group_name)
         public_ip_addresses = self.network_client.public_ip_addresses.list(
             resource_group_name=group_name)
-  
+
         for net_interface in interfaces:
             net_interface = net_interface.as_dict()
 
@@ -318,19 +330,21 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
                         "fqdn": None,
                         "network": net_interface.get('ip_configurations')[0].get('subnet').get('id'),
                         "connected": (net_interface.get('provisioning_state') == "Running" and True or False),
-                        "details": net_interface 
+                        "details": net_interface
                     })
-                    
+
                     if net_interface.get('primary'):
                         for configuration in net_interface.get('ip_configurations'):
                             if configuration.get('primary'):
-                                private_ip_address = configuration.get('private_ip_address')
-                                public_ip_address_id = configuration.get('public_ip_address').get('id')
+                                private_ip_address = configuration.get(
+                                    'private_ip_address')
+                                public_ip_address_id = configuration.get(
+                                    'public_ip_address').get('id')
 
                                 public_ip_address = [
                                     pub_ip_add.as_dict().get('ip_address')
                                     for pub_ip_add in public_ip_addresses
                                     if pub_ip_add.as_dict().get('id') == public_ip_address_id
                                 ][0]
-        
+
         return networks, private_ip_address, public_ip_address
