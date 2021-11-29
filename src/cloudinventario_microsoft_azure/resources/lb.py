@@ -22,7 +22,8 @@ class CloudInventarioAzureLoadBalancer(CloudInvetarioResource):
             self.network_client = NetworkManagementClient(
                 credential=credentials, subscription_id=subscription_id)
 
-            logging.info("logging config for AzureLoadBalancer={}".format(self.collector.tenant_id))
+            logging.info("logging config for AzureLoadBalancer={}".format(
+                self.collector.tenant_id))
         except Error as e:
             logging.error(e)
 
@@ -41,7 +42,6 @@ class CloudInventarioAzureLoadBalancer(CloudInvetarioResource):
             'ip_address': ip.get('private_ip_address')
         } for ip in balancer.get('frontend_ip_configurations', [])]
 
-
         logging.info("new AzureLoadBalancer name={}".format(
             balancer.get('name')))
         data = {
@@ -50,10 +50,10 @@ class CloudInventarioAzureLoadBalancer(CloudInvetarioResource):
             "tags": balancer.get('tags', []),
             "type": balancer.get('type'),
             "subnets": subnets,
-            "cluster": balancer.get('location'),
+            "location": balancer.get('location'),
             "instances": re.search(r'resourceGroups/(.*?)/', balancer.get('id', '')).group(1),
-            "status": balancer.get('provisioning_state'),
 
+            # "status": balancer.get('provisioning_state'),
             # "scheme": balancer['loadBalancingScheme'],
             # "backends": balancer['instanceGroups'],
             # "description": balancer['description'],
