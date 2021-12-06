@@ -43,7 +43,7 @@ class CloudCollectorMicrosoftAzure(CloudCollector):
             client_secret=self.client_secret,
         )
         
-        logging.info("logging in MicrosoftAzure={}".format(self.tenant_id))
+        logging.info("logging in MicrosoftAzure={}".format(self.subscription_id))
         return self.credential
 
     def _fetch(self, collect):
