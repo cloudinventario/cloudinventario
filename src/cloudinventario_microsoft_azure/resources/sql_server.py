@@ -9,10 +9,10 @@ from azure.mgmt.sql import SqlManagementClient
 
 
 def setup(resource, collector):
-    return CloudInventarioAzureCloudSQL(resource, collector)
+    return CloudInventarioAzureSQLServer(resource, collector)
 
 
-class CloudInventarioAzureCloudSQL(CloudInvetarioResource):
+class CloudInventarioAzureSQLServer(CloudInvetarioResource):
 
     def __init__(self, resource, collector):
         super().__init__(resource, collector)
@@ -25,7 +25,7 @@ class CloudInventarioAzureCloudSQL(CloudInvetarioResource):
             self.sql_client = SqlManagementClient(
                 credential=credentials, subscription_id=subscription_id)
 
-            logging.info("logging config for AzureCloudSQL={}".format(
+            logging.info("logging config for AzureSqlServer={}".format(
                 self.collector.subscription_id))
         except Error as e:
             logging.error(e)
@@ -35,11 +35,11 @@ class CloudInventarioAzureCloudSQL(CloudInvetarioResource):
         for sql in list(self.sql_client.servers.list()):
             data.append(self._process_resource(sql.as_dict()))
 
-        logging.info("Collected {} cloud sqls".format(len(data)))
+        logging.info("Collected {} SQLServers".format(len(data)))
         return data
 
     def _process_resource(self, sql):
-        logging.info("new AzureCloudSQL name={}".format(sql.get('name')))
+        logging.info("new AzureSQLServer name={}".format(sql.get('name')))
         data = {
             "id": sql.get('id'),
             "name": sql.get('name'),
