@@ -49,6 +49,35 @@ class CloudCollectorMicrosoftAzure(CloudCollector):
     def _fetch(self, collect):
         return []
 
+    @staticmethod
+    def _fetch_sql(resources):
+        data = []
+        for sql in list(resources.sql_client.servers.list()):
+            data.append(CloudCollectorMicrosoftAzure._process_sql(sql.as_dict(), resources))
+
+        logging.info("Collected {} {}".format(len(data), resources.sql_name))
+        return data
+
+    @staticmethod
+    def _process_sql(sql, resources):
+        logging.info("new Azure{} name={}".format(resources.sql_name, sql.get('name')))
+        data = {
+            "id": sql.get('id'),
+            "name": sql.get('name'),
+            "type": sql.get('type'),
+            "location": sql.get('location'),
+            "tags": sql.get('tags', []),
+            "storage": sql.get('storage_profile', {}).get('storage_mb', 0),
+            "version": sql.get('version'),
+            "networks": sql.get('private_endpoint_connections', []),
+            "domain": sql.get('fully_qualified_domain_name'),
+            "status": sql.get('state') or sql.get('user_visible_state'),
+            "instances": re.search(r'resourceGroups/(.*?)/', sql.get('id', '')).group(1),
+            "is_on": 1 if sql.get('state', '').lower() == "ready" or sql.get('user_visible_state', '').lower() == "ready" else 0
+        }
+
+        return resources.new_record(resources.res_type, data, sql)
+
     def _get_dependencies(self):
         return []
 
