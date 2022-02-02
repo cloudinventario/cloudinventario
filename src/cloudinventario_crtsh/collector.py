@@ -65,9 +65,9 @@ class CloudCollectorCRTsh(CloudCollector):
             "not_before": rec.get('not_before'),
             "not_after": rec.get('not_after'),
             "serial_number": rec.get('serial_number'),
-            "name": re.sub('\n', '', rec.get('name_value')),
-            "common_name": rec.get('common_name'),
-            "owner": rec.get('issuer_name'), # issuer_name
+            "name": rec.get('common_name'),
+            "alias": rec.get('name_value').split('\n'),
+            "issuer_name": rec.get('issuer_name'), # issuer_name
             "issuer_ca_id": rec.get('issuer_ca_id')
         }
         return self.new_record('crt', data, rec)
