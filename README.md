@@ -2,7 +2,7 @@
 
 Cloud inventoring system
 
-# Supported Platforms
+# Implemented Collectors
 
 * [VMWare VSphere](src/cloudinventario_vmware_vsphere)
 * [VMWare Cloud Director](src/cloudinventario_vmware_vcd)
@@ -11,6 +11,10 @@ Cloud inventoring system
 * [Amazon Lightsail](src/cloudinventario_amazon_ligtsail)
 * [Google Cloud Platform - GCP](src/cloudinventario_google_gcp)
 * [Microsoft Azure](src/cloudinventario_microsoft_azure)
+* [Hetzner HCloud](src/cloudinventario_hetzner_hcloud)
+* [Proxmox](src/cloudinventario_proxmox)
+* [crt.sh](src/cloudinventario_crtsh)
+* [libcloud](src/cloudinventario_libcloud)
 
 # License
 
