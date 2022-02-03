@@ -1,5 +1,6 @@
 import logging
 import re
+from copy import Error
 
 from cloudinventario.helpers import CloudInvetarioResource
 from azure.mgmt.network import NetworkManagementClient
@@ -23,7 +24,7 @@ class CloudInventarioAzureLoadBalancer(CloudInvetarioResource):
                 credential=credentials, subscription_id=subscription_id)
 
             logging.info("logging config for AzureLoadBalancer={}".format(
-                self.collector.tenant_id))
+                self.collector.subscription_id))
         except Error as e:
             logging.error(e)
 

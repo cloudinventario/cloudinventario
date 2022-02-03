@@ -10,3 +10,12 @@ boto3
 google-api-python-client
 google-auth
 google-cloud-datastore
+
+azure-common
+azure-mgmt-sql
+azure-mgmt-resource
+azure-mgmt-rdbms
+
+azure-identity
+mysql
+mysql-connector
