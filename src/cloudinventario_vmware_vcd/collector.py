@@ -34,6 +34,7 @@ class CloudCollectorVMWareVCD(CloudCollector):
     passwd = self.config['pass']
     org = self.config['org']
     vdc = self.config.get('vdc')
+    api_version = self.config.get('api-version')
 
     # suppress logging
     for name in ['urllib3.connectionpool', 'vcd_pysdk.log']:
@@ -42,7 +43,7 @@ class CloudCollectorVMWareVCD(CloudCollector):
       vcd_logger.setLevel(logging.WARNING)
 
     logging.info("logging in host={}".format(host))
-    self.client = vcd.Client(host, api_version = '29.0',
+    self.client = vcd.Client(host, api_version = api_version,
                              verify_ssl_certs = self.verify_ssl,
                              log_file='log',
                              log_requests=False,
