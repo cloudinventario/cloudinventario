@@ -47,33 +47,36 @@ class CloudCollectorAmazonAWSMulti(CloudCollector):
           RoleSessionName = "ASSR-{}".format(role['account'])
         )
         as_creds = assumed['Credentials']
-        self._add_creds_regions(role['account'], as_creds['AccessKeyId'], as_creds['SecretAccessKey'], as_creds['SessionToken'], role_regions)
+        self._add_creds_regions(role['name'], role['account'], as_creds['AccessKeyId'], as_creds['SecretAccessKey'], as_creds['SessionToken'], role_regions)
 
     # create clients
     self.clients = []
     for cred in self.creds:
-      account_id = cred['account_id'] or 0
-      name = "{}@{}".format(self.name, account_id)
+      name = self.name
+      if cred['name'] is not None:
+        name = "{}@{}".format(name, cred['name'])
+
       handle = CloudInventario.loadCollectorModule("amazon-aws", name, cred, self.defaults, self.options)
       handle.login()
       self.clients.append({
-        "account_id": account_id,
+        "account_id": cred['account_id'] or 0,
         "handle": handle
       })
 
     return True
 
-  def _add_creds_regions(self, account_id, access_key, secret_key, session_token = None, regions = None):
+  def _add_creds_regions(self, name, account_id, access_key, secret_key, session_token = None, regions = None):
     if regions:
        for region in regions:
-         self._add_creds(account_id, access_key, secret_key, session_token, region)
+         self._add_creds(name, account_id, access_key, secret_key, session_token, region)
     else:
-      self._add_creds(account_id, access_key, secret_key)
+      self._add_creds(None, account_id, access_key, secret_key)
     return self.creds
 
-  def _add_creds(self, account_id, access_key, secret_key, session_token = None, region = None):
+  def _add_creds(self, subname, account_id, access_key, secret_key, session_token = None, region = None):
     if region:
       self.creds.append({
+        "name": subname,
         "access_key": access_key,
         "secret_key": secret_key,
         "session_token": session_token,
@@ -92,11 +95,12 @@ class CloudCollectorAmazonAWSMulti(CloudCollector):
       regions = [region['RegionName'] for region in region_list['Regions']]
       for region in regions:
         self.creds.append({
-          access_key: access_key,
-          secret_key: secret_key,
-          session_token: session_token,
-          region: region,
-          account_id: account_id
+          "name": subname,
+          "access_key": access_key,
+          "secret_key": secret_key,
+          "session_token": session_token,
+          "region": region,
+          "account_id": account_id
         })
     return self.creds
 
