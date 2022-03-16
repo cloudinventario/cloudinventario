@@ -147,7 +147,6 @@ class CloudCollectorAmazonAWS(CloudCollector):
         "created": None,
         "name": name,
         "cluster": rec["Placement"]["AvailabilityZone"],
-        "project": rec["Placement"]["GroupName"],
         "description": None,
         "id": rec["InstanceId"],
         "type": instance_type,

@@ -21,8 +21,8 @@ class CloudCollector:
   def __init__(self, name, config, defaults, options):
     self.name = name
     self.config = config
-    self.defaults = defaults
-    self.options = options
+    self.defaults = {**defaults}
+    self.options = {**options}
 
     self.allow_self_signed = options.get('allow_self_signed', config.get('allow_self_signed', False))
     if self.allow_self_signed:

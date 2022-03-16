@@ -55,6 +55,7 @@ class CloudCollectorAmazonAWSMulti(CloudCollector):
       name = self.name
       if cred['name'] is not None:
         name = "{}@{}".format(name, cred['name'])
+        self.defaults['project'] = cred['name']
 
       handle = CloudInventario.loadCollectorModule("amazon-aws", name, cred, self.defaults, self.options)
       handle.login()
