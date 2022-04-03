@@ -1,11 +1,14 @@
 FROM python:3
 
-COPY [ "src", "/app/src" ]
+RUN mkdir -p /app
+
 COPY [ "cloudinventario", "/app" ]
 COPY [ "requirements.txt", "/app" ]
 
 WORKDIR "/app"
 RUN [ "pip", "install", "-r", "requirements.txt" ]
+
+COPY [ "src", "/app/src" ]
 
 #ENV PYTHONPATH "/app/src"
 

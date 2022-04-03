@@ -104,7 +104,7 @@ class CloudCollectorAmazonAWS(CloudCollector):
     for iface in rec["NetworkInterfaces"]:
       networks.append({
         "id": iface["NetworkInterfaceId"],
-        "name": iface.get("Name") or iface.get("Description"),
+        "name": iface.get("Name") or iface.get("Description") or None,
         "mac": iface["MacAddress"],
         "ip": iface["PrivateIpAddress"],
         "fqdn": iface.get("PrivateDnsName"),
@@ -115,7 +115,7 @@ class CloudCollectorAmazonAWS(CloudCollector):
         networks.append({
           "id": iface["NetworkInterfaceId"],
           "type": "virtual",	# like elastic (== shared)
-          "name": iface.get("Name") or iface.get("Description"),
+          "name": iface.get("Name") or iface.get("Description") or None,
           "mac": iface["MacAddress"],
           "ip": iface["Association"].get("PublicIp"),
           "fqdn": iface["Association"].get("PublicDnsName"),
