@@ -171,6 +171,13 @@ class CloudCollectorAmazonAWS(CloudCollector):
 
     return self.new_record('vm', vm_data, rec)
 
+  def new_record(self, rectype, attrs, details):
+    attrs_extra = {
+        "owner": self.account_id,
+    }
+    attrs = {**attrs, **attrs_extra}
+    return super().new_record(rectype, attrs, details)
+
   def _logout(self):
     self.client = None
 

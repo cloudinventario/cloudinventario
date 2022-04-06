@@ -2,6 +2,12 @@ FROM python:3
 
 RUN mkdir -p /app
 
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		ca-certificates \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
 COPY [ "cloudinventario", "/app" ]
 COPY [ "requirements.txt", "/app" ]
 
