@@ -104,7 +104,7 @@ class CloudCollectorAmazonAWS(CloudCollector):
     for iface in rec["NetworkInterfaces"]:
       networks.append({
         "id": iface["NetworkInterfaceId"],
-        "name": iface.get("Name") or iface.get("Description"),
+        "name": iface.get("Name") or iface.get("Description") or None,
         "mac": iface["MacAddress"],
         "ip": iface["PrivateIpAddress"],
         "fqdn": iface.get("PrivateDnsName"),
@@ -115,7 +115,7 @@ class CloudCollectorAmazonAWS(CloudCollector):
         networks.append({
           "id": iface["NetworkInterfaceId"],
           "type": "virtual",	# like elastic (== shared)
-          "name": iface.get("Name") or iface.get("Description"),
+          "name": iface.get("Name") or iface.get("Description") or None,
           "mac": iface["MacAddress"],
           "ip": iface["Association"].get("PublicIp"),
           "fqdn": iface["Association"].get("PublicDnsName"),
@@ -147,7 +147,6 @@ class CloudCollectorAmazonAWS(CloudCollector):
         "created": None,
         "name": name,
         "cluster": rec["Placement"]["AvailabilityZone"],
-        "project": rec["Placement"]["GroupName"],
         "description": None,
         "id": rec["InstanceId"],
         "type": instance_type,
@@ -171,6 +170,13 @@ class CloudCollectorAmazonAWS(CloudCollector):
     }
 
     return self.new_record('vm', vm_data, rec)
+
+  def new_record(self, rectype, attrs, details):
+    attrs_extra = {
+        "owner": self.account_id,
+    }
+    attrs = {**attrs, **attrs_extra}
+    return super().new_record(rectype, attrs, details)
 
   def _logout(self):
     self.client = None

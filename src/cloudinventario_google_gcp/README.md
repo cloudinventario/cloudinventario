@@ -2,11 +2,10 @@
 
 # Config
 
-* zone
-* project_id
-* client_email
-* token_uri
-* private_key
+* expired
+* wildcard
+* identity
+* deduplicate
 
 # Collecting for VMs (type: vm)
 
