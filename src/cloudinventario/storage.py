@@ -34,7 +34,7 @@ class InventoryStorage:
      #self.conn.execution_options(autocommit=True)
      if not self.__check_schema():
        self.__create_schema()
-     self.__prepare();
+     self.__prepare()
      return True
 
    def __check_schema(self):
@@ -125,6 +125,22 @@ class InventoryStorage:
        sa.Column('details', sa.Text),
      )
 
+     self.usage_cost = sa.Table(TABLE_PREFIX + 'usage_cost', meta,
+       sa.Column('period_type', sa.String),
+       sa.Column('from', sa.String),
+       sa.Column('to', sa.String),
+
+       sa.Column('type', sa.String),
+       sa.Column('source', sa.String),
+       sa.Column('version', sa.Integer),
+
+       sa.Column('cost', sa.Float),
+       sa.Column('unit', sa.String),
+
+       sa.Column('attributes', sa.Text),
+       sa.Column('details', sa.Text),
+     )
+
      meta.create_all(self.engine, checkfirst = True)
      return True
 
@@ -204,8 +220,8 @@ class InventoryStorage:
      # to work normaly with every type of data (vm, storage...) remove *this
      data_to_insert['inventory_table'] = []
      for item in data:
-       # * from 
-       if item['type'] != 'dns_domain' and item['type'] != 'dns_record':
+      # * from 
+       if item['type'] not in ['dns_domain', 'dns_record', 'usage_cost']:
          data_to_insert['inventory_table'].append(item)
        else:
        # * to 
@@ -221,6 +237,7 @@ class InventoryStorage:
        conn.execute(self.source_table.insert(), sources_save)
        conn.execute(self.dns_record.insert(), data_to_insert['dns_record']) if 'dns_record' in data_to_insert else None
        conn.execute(self.dns_domain.insert(), data_to_insert['dns_domain']) if 'dns_domain' in data_to_insert else None
+       conn.execute(self.usage_cost.insert(), data_to_insert['usage_cost']) if 'usage_cost' in data_to_insert else None
        conn.execute(self.inventory_table.insert(), data_to_insert['inventory_table'])
      return True
 
