@@ -53,6 +53,21 @@ class CloudInventario:
      )
      return mod_instance
 
+   def login(self, collector, options = None):
+     # workaround for buggy libs
+     wd = os.getcwd()
+     os.chdir("/tmp")
+     try:
+       instance = self.loadCollector(collector, options)
+       instance.login()
+       instance.logout()
+       print(f"{collector}: OK")
+     except Exception as e:
+       print(f"{collector}: FAILED\n{e}")
+       logging.error(f"{collector}: FAILED\n{e}")
+     finally:
+       os.chdir(wd)
+
    def collect(self, collector, options = None):
      # workaround for buggy libs
      wd = os.getcwd()
