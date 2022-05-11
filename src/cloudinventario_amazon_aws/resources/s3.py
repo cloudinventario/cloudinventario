@@ -1,6 +1,7 @@
 import logging
 import boto3, json
 from pprint import pprint
+import botocore.exceptions as aws_exception
 
 from cloudinventario.helpers import CloudInvetarioResource
 
@@ -22,7 +23,6 @@ class CloudInventarioS3(CloudInvetarioResource):
 
   def _fetch(self):
     data = []
-
     for bucket in self.client.list_buckets()['Buckets']:
       data.append(self._process_resource(bucket['Name']))
 
