@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError
 from cloudinventario.cloudinventario import CloudInventario
 from cloudinventario.helpers import CloudCollector
 #from cloudinventario_amazon_aws.collector import CloudCollectorAmazonAWS
+from cloudinventario_amazon_aws_resource import CloudInvetarioAmazonAWSResource
 
 # TEST MODE
 TEST = 0
@@ -16,7 +17,7 @@ TEST = 0
 def setup(name, config, defaults, options):
   return CloudCollectorAmazonAWSMulti(name, config, defaults, options)
 
-class CloudCollectorAmazonAWSMulti(CloudCollector):
+class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
 
   def __init__(self, name, config, defaults, options):
     super().__init__(name, config, defaults, options)
@@ -27,6 +28,7 @@ class CloudCollectorAmazonAWSMulti(CloudCollector):
     region = self.config['region']
     roles = self.config.get('roles')
     regions = self.config.get('regions')
+    continue_on_error = self.config.get('continue-on-error', False)
 
     self.creds = []
     self.primary_region = region
@@ -41,13 +43,19 @@ class CloudCollectorAmazonAWSMulti(CloudCollector):
       client = boto3.client('sts', aws_access_key_id = access_key, aws_secret_access_key = secret_key)
 
       for role in roles:
-        role_regions = role.get('region', regions)
-        assumed = client.assume_role(
-          RoleArn = "arn:aws:iam::{}:role/{}".format(role['account'], role['role']),
-          RoleSessionName = "ASSR-{}".format(role['account'])
-        )
-        as_creds = assumed['Credentials']
-        self._add_creds_regions(role['name'], role['account'], as_creds['AccessKeyId'], as_creds['SecretAccessKey'], as_creds['SessionToken'], role_regions)
+        try:
+          role_regions = role.get('region', regions)
+          assumed = client.assume_role(
+            RoleArn = "arn:aws:iam::{}:role/{}".format(role['account'], role['role']),
+            RoleSessionName = "ASSR-{}".format(role['account'])
+          )
+          as_creds = assumed['Credentials']
+          self._add_creds_regions(role['name'], role['account'], as_creds['AccessKeyId'], as_creds['SecretAccessKey'], as_creds['SessionToken'], role_regions)
+        except Exception as error:
+          logging.warning(f"AccessDenied on User: {role['account']} to perform: {role['role']}")
+          if not continue_on_error:
+            raise error
+          logging.warning(f"Skipping User: {role['account']}")
 
     # create clients
     self.clients = []
@@ -59,6 +67,7 @@ class CloudCollectorAmazonAWSMulti(CloudCollector):
 
       handle = CloudInventario.loadCollectorModule("amazon-aws", name, cred, self.defaults, self.options)
       handle.login()
+
       self.clients.append({
         "account_id": cred['account_id'] or 0,
         "handle": handle
