@@ -11,6 +11,8 @@ from pyvcloud.vcd.utils import to_dict, vapp_to_dict, vm_to_dict, stdout_xml
 from pyvcloud.vcd.client import QueryResultFormat
 from pyvcloud.vcd.client import ResourceType
 
+from pyvcloud.vcd.exceptions import SDKException
+
 from cloudinventario.helpers import CloudCollector
 
 # TEST MODE
@@ -118,7 +120,7 @@ class CloudCollectorVMWareVCD(CloudCollector):
         vapp_res = vdc.get_vapp(vapp_name)
         vapp = vcdVApp(self.client, resource=vapp_res)
         res.extend(self.__process_vapp(org_name, vdc_name, vapp_name, vdc, vapp))
-      except Exception as e:
+      except SDKException as e:
         logging.exception("Exception while processing VApp = {}".format(vapp_name))
         pass
       if TEST:
