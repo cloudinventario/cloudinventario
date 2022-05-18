@@ -5,6 +5,7 @@ from copy import Error
 from cloudinventario.helpers import CloudInvetarioResource
 from cloudinventario_microsoft_azure.collector import CloudCollectorMicrosoftAzure
 
+from azure.core.exceptions import AzureError
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.rdbms.mysql import MySQLManagementClient
 
@@ -28,8 +29,13 @@ class CloudInventarioAzureMysql(CloudInvetarioResource):
 
             logging.info("logging config for Azure{}={}".format(self.sql_name, 
                 self.collector.subscription_id))
+        except AzureError as error
+            logging.error(f"AzureError: {error}")
         except Error as e:
             logging.error(e)
+        except Exception as error:
+            raise error
+
 
     def _fetch(self):        
         return CloudCollectorMicrosoftAzure._fetch_sql(self)

@@ -2,6 +2,7 @@ import logging
 import re
 from copy import Error
 
+from azure.core.exceptions import AzureError
 from cloudinventario.helpers import CloudInvetarioResource
 from azure.mgmt.network import NetworkManagementClient
 
@@ -25,8 +26,12 @@ class CloudInventarioAzureLoadBalancer(CloudInvetarioResource):
 
             logging.info("logging config for AzureLoadBalancer={}".format(
                 self.collector.subscription_id))
+        except AzureError as error
+            logging.error(f"AzureError: {error}")
         except Error as e:
             logging.error(e)
+        except Exception as error:
+            raise error
 
     def _fetch(self):
         data = []

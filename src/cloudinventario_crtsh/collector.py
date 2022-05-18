@@ -2,6 +2,8 @@ import logging, re, requests, json
 
 from cloudinventario.helpers import CloudCollector
 
+# from  
+
 # TEST MODE
 TEST = 0
 
@@ -51,8 +53,9 @@ class CloudCollectorCRTsh(CloudCollector):
                 json_data = json.loads(content)
                 for item in json_data:
                     data.append(self._process(item))
-            except Exception as e:
-                logging.error("Error after requesting {} {}".format(url, e))
+            except Exception as error:
+                logging.error("Error after requesting {} {}".format(url, error))
+                raise error
         
         logging.info("Collected {} logs".format(len(data)))
         return data
