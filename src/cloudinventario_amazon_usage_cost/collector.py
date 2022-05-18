@@ -9,6 +9,7 @@ from pprint import pprint
 
 import boto3
 
+from cloudinventario_amazon_aws_resource.collector import CloudInvetarioAmazonAWSResource
 from cloudinventario.helpers import CloudCollector, CloudInvetarioResourceManager
 
 # TEST MODE
@@ -19,7 +20,7 @@ def setup(name, config, defaults, options):
   return CloudCollectorAmazonUsageCost(name, config, defaults, options)
 
 
-class CloudCollectorAmazonUsageCost(CloudCollector):
+class CloudCollectorAmazonUsageCost(CloudInvetarioAmazonAWSResource):
 
   def __init__(self, name, config, defaults, options):
     super().__init__(name, config, defaults, options)

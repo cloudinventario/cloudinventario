@@ -77,8 +77,9 @@ class CloudCollector:
       data.extend(self._resource_fetch())
       data.extend(self._fetch(collect))
       return data
-    except:
-      raise
+    except Exception as error:
+      if not (self.options['check_permission'] and self.check_permission(self.client, error)):
+        raise
     finally:
       self.__post_request()
 
@@ -197,6 +198,9 @@ class CloudCollector:
 
     return rec
 
+  def check_permission(self, client, error):
+      pass
+
 class CloudInvetarioResourceManager:
 
   def __init__(self, res_list, collector_pkg, collector):
@@ -235,6 +239,7 @@ class CloudInvetarioResourceManager:
 
     return obj_dict
 
+
 class CloudInvetarioResource():
 
   def __init__(self, res_type, collector):
@@ -257,9 +262,12 @@ class CloudInvetarioResource():
       self.raw_data = []
       self.data = self._fetch()
       return self.data
-    except Exception:
-      logging.error("Failed to fetch the data of the following type of cloud resource: {}". format(self.res_type))
-      raise
+    except Exception as error:
+      if self.collector.options['check_permission'] and self.collector.check_permission(self.client, error):
+        return []
+      else:
+        logging.error("Failed to fetch the data of the following type of cloud resource: {}". format(self.res_type))
+        raise
 
   def process_resource(self, resource_data):
     try:

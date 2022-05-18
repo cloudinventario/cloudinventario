@@ -1,5 +1,7 @@
 import boto3
 
+import botocore.exceptions as aws_exception
+
 from cloudinventario.helpers import CloudInvetarioResource
 
 def setup(resource, collector):
@@ -26,8 +28,8 @@ class CloudInventarioEbs(CloudInvetarioResource):
     for page in response_iterator:
       for volume in page['Volumes']:
         data.append(self.process_resource(volume))
-
     return data
+      
 
   def _process_resource(self, volume):
     mounts = []
