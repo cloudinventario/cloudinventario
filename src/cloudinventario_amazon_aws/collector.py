@@ -4,6 +4,7 @@ from pprint import pprint
 
 import boto3
 
+from cloudinventario_amazon_aws_resource.collector import CloudInvetarioAmazonAWSResource
 from cloudinventario.helpers import CloudCollector, CloudInvetarioResourceManager
 
 # TEST MODE
@@ -12,9 +13,10 @@ TEST = 0
 def setup(name, config, defaults, options):
   return CloudCollectorAmazonAWS(name, config, defaults, options)
 
-class CloudCollectorAmazonAWS(CloudCollector):
+class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
 
   def __init__(self, name, config, defaults, options):
+    self.error = ['AccessDenied', 'UnauthorizedOperation']
     super().__init__(name, config, defaults, options)
 
   def _config_keys():
@@ -27,7 +29,8 @@ class CloudCollectorAmazonAWS(CloudCollector):
     }
 
   def _get_dependencies(self):
-    return ["ebs"]
+    return []
+    # return ["ebs"]
 
   def _login(self):
     access_key = self.config['access_key']
@@ -56,7 +59,6 @@ class CloudCollectorAmazonAWS(CloudCollector):
 
   def _fetch(self, collect):
     data = []
-
     next_token = ""
     while True:
       instances = self.client.describe_instances(MaxResults=100, NextToken=next_token)
@@ -67,11 +69,12 @@ class CloudCollectorAmazonAWS(CloudCollector):
 
       next_token = None
       if 'NextToken' in instances:
-         next_token = instances['NextToken']
+        next_token = instances['NextToken']
       if not next_token:
         break
     return data
-
+      
+      
   def _get_instance_type(self, itype):
     if itype not in self.instance_types:
       types = self.client.describe_instance_types(InstanceTypes = [ itype ])

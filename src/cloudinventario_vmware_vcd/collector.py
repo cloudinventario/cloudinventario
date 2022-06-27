@@ -11,6 +11,8 @@ from pyvcloud.vcd.utils import to_dict, vapp_to_dict, vm_to_dict, stdout_xml
 from pyvcloud.vcd.client import QueryResultFormat
 from pyvcloud.vcd.client import ResourceType
 
+from pyvcloud.vcd.exceptions import SDKException
+
 from cloudinventario.helpers import CloudCollector
 
 # TEST MODE
@@ -118,9 +120,10 @@ class CloudCollectorVMWareVCD(CloudCollector):
         vapp_res = vdc.get_vapp(vapp_name)
         vapp = vcdVApp(self.client, resource=vapp_res)
         res.extend(self.__process_vapp(org_name, vdc_name, vapp_name, vdc, vapp))
-      except Exception as e:
+      except SDKException as e:
         logging.exception("Exception while processing VApp = {}".format(vapp_name))
-        pass
+      except Exception as error:
+        raise error
       if TEST:
         break
     return res
@@ -225,9 +228,11 @@ class CloudCollectorVMWareVCD(CloudCollector):
     resource_type = vcd.ResourceType.VM.value
     try:
       vm_list = vdc.list_vapp_details(resource_type, 'containerName==' + vapp_name)
-    except:
+    except SDKException as e:
       logging.error("failed to get VM list for vapp={}".format(vapp_name))
       return [res]
+    except Exception as error:
+      raise error
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = self.options["tasks"] or 1) as executor:
       futures = []
@@ -239,7 +244,7 @@ class CloudCollectorVMWareVCD(CloudCollector):
 
   def __process_vm(self, org_name, vdc_name, vapp_name, vm_name, vdc, vapp, vm):
     # VM details
-    vm.get_resource();
+    vm.get_resource()
     rec = to_dict(vm.resource)
     rec_detail = vm_to_dict(vm.resource)
     rec = {**rec, **rec_detail}

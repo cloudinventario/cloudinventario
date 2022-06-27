@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 DN = os.path.dirname(os.path.abspath(__file__))
 
-sys.path.append(DN + '/src');
+sys.path.append(DN + '/src')
 from cloudinventario.cloudinventario import CloudInventario
 import cloudinventario.storage as storage
 
@@ -35,6 +35,8 @@ def getArgs():
                        help='Verbose')
    parser.add_argument('--test-login', action='store_true', default=0,
                        help='Test verify if configuration is correct')
+   parser.add_argument('--check-permission', action='store_true', default=0,
+                       help='If credentials do not have permission for resource, resource will be skipped')
    args = parser.parse_args()
    return args
 
@@ -97,7 +99,8 @@ def main(args):
   cinv = CloudInventario(config)
 
   options = {
-    "tasks": args.tasks or 2
+    "tasks": args.tasks or 2,
+    "check_permission": True if args.check_permission else False
   }
 
   if args.prune:

@@ -1,6 +1,8 @@
 import boto3, json
 from pprint import pprint
 
+import botocore.exceptions as aws_exception
+
 from cloudinventario.helpers import CloudInvetarioResource
 
 def setup(resource, collector):
@@ -21,15 +23,15 @@ class CloudInventarioRds(CloudInvetarioResource):
 
   def _fetch(self):
     data = []
+
     paginator = self.client.get_paginator('describe_db_instances')
     response_iterator = paginator.paginate()
 
     for page in response_iterator:
       for db_instance in page['DBInstances']:
         data.append(self.process_resource(db_instance))
-
     return data
-
+      
   def _process_resource(self, db):
     storage = db['PendingModifiedValues'].get('AllocatedStorage') or db['AllocatedStorage']
     instance_def = self.collector._get_instance_type(db['DBInstanceClass'][3:])

@@ -13,6 +13,7 @@ from sqlalchemy.sql.sqltypes import Boolean
 
 from cloudinventario.helpers import CloudInvetarioResource
 
+from azure.core.exceptions import AzureError
 from azure.identity import ClientSecretCredential
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.resource import ResourceManagementClient, resources
@@ -57,9 +58,14 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
                 self.collector.tenant_id))
 
             return True
+        except AzureError as error
+            logging.error(f"AzureError: {error}")
+            return False
         except Error as e:
             logging.error(e)
             return False
+        except Exception as error:
+            raise error
 
     def _fetch(self) -> List[Dict]:
         data: List = []

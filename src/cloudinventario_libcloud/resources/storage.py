@@ -60,7 +60,7 @@ class CloudInventarioStorage(CloudInvetarioResource):
         except LibcloudError as liberror:
             logging.warn("Storage is not from {} region, it will not have 'objects'".format(self.collector.zone))
         except Exception as error:
-            traceback.print_exc()
+            raise error
         return objects_result
 
     def _process_resource(self, storage):
