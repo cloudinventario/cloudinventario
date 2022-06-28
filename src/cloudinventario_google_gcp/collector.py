@@ -30,7 +30,6 @@ class CloudCollectorGoogleGCP(CloudCollector):
             private_key: 'GCP Private Key, Required (Need to replace \n to new lines in yaml)',
             client_email: 'GCP ClientEmail, Required',
             token_uri: 'GCP TokenURI, Required',
-t
             type: 'GCP Type',
             private_key_id: 'GCP PrivateKeyId',
             client_id: 'GCP ClientId',

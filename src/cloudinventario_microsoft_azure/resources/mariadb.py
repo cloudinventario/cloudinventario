@@ -29,7 +29,7 @@ class CloudInventarioAzureMariaDB(CloudInvetarioResource):
 
             logging.info("logging config for Azure{}={}".format(self.sql_name, 
                 self.collector.subscription_id))
-        except AzureError as error
+        except AzureError as error:
             logging.error(f"AzureError: {error}")
         except Error as e:
             logging.error(e)
