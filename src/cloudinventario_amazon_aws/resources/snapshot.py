@@ -34,7 +34,7 @@ class CloudInventarioSnapshot(CloudInvetarioResource):
       
 
   def _process_resource(self, snapshot):
-    GIB_TO_MB = 1073
+    GIB_TO_MIB = 1024
 
     logging.info("collecting snapshot with ID={}".format(snapshot.id))
     data = {
@@ -52,7 +52,7 @@ class CloudInventarioSnapshot(CloudInvetarioResource):
     'state_message': snapshot.state_message,
     'tags': snapshot.tags,
     'volume_id': snapshot.volume_id,
-    'storage': snapshot.volume_size * GIB_TO_MB,
+    'storage': snapshot.volume_size * GIB_TO_MIB,
     }
 
     return self.new_record(self.res_type, data, snapshot.meta.__dict__)
