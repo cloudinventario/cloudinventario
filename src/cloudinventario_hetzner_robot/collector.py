@@ -14,7 +14,16 @@ def setup(name, config, defaults, options):
 class CloudCollectorHetznerRobot(CloudCollector):
 
   def __init__(self, name, config, defaults, options):
+    self.ERRORS = ['401']
     super().__init__(name, config, defaults, options)
+
+  def check_permission(self, client, error):
+    if str(error.status) in self.ERRORS:
+      print("Don't have permission for service, stopped collecting user/client: {}, because: {}".format(client.conn.user, str(error)))
+      logging.warning("Don't have permission for service, stopped collecting user/client:{}, because: {}".format(client.conn.user, str(error)))
+      return True
+    else:
+      return False
 
   def _login(self):
     self.user = self.config['user']
@@ -49,7 +58,7 @@ class CloudCollectorHetznerRobot(CloudCollector):
         'traffic_monthly': subnet.traffic_monthly,
       })
 
-    # IP
+    # IPs
     networks_data = []
     for ip in list(server.ips):
       networks_data.append({
