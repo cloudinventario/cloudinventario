@@ -92,3 +92,21 @@
 * website
 * owner
 * tags
+
+# Collecting for EC2 snapshot (type: snapshot)
+
+* id
+* data_encryption_key_id
+* description
+* encrypted
+* kms_key_id
+* outpost_arn
+* owner_alias
+* progress
+* is_on
+* created
+* status
+* state_message
+* tags
+* volume_id
+* storage

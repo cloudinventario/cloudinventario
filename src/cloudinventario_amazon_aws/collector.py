@@ -128,7 +128,7 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
     # TODO: avoid duplicate counting
     storage = 0
     storages = []
-    ebs_data = self.get_resource_data("ebs")
+    ebs_data = self.get_resource_data("ebs") if 'ebs' in self.resource_collectors else None
     if ebs_data and rec["InstanceId"] in ebs_data:
       storage = ebs_data[rec["InstanceId"]]["size"]
       storages = ebs_data[rec["InstanceId"]]["storages"]
@@ -136,7 +136,7 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
     name = tags.get("Name") or rec["InstanceId"]
     logging.debug("new VM name={}".format(name))
 
-    ebs = self.resource_collectors["ebs"].get_raw_data()
+    ebs = self.resource_collectors["ebs"].get_raw_data() if 'ebs' in  self.resource_collectors else []
 
     storage = 0
     storages = []

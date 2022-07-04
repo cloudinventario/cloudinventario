@@ -64,10 +64,12 @@ class CloudInventario:
        instance.logout()
        print(f"+ {collector}: OK")
        logging.info(f"{collector}: OK")
+       return 0
      except Exception as e:
        print(f"+ {collector}: FAILED\nException: {repr(e)}")
        logging.info("", exc_info=True)
        logging.info(f"{collector}: FAILED, Exception: {repr(e)}")
+       return 1
      finally:
        os.chdir(wd)
 
