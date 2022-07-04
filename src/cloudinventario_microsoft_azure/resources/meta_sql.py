@@ -40,7 +40,7 @@ class CloudInventarioAzureMetaSQL(CloudInvetarioResource):
             self.sql_server._login(credentials)
             logging.info("logging config for AzureMetaSQL={}".format(
                 self.subscription_id))
-        except AzureError as error
+        except AzureError as error:
             logging.error(f"AzureError: {error}")
         except Error as e:
             logging.error(e)
