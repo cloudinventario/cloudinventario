@@ -8,8 +8,7 @@ from botocore.exceptions import ClientError
 
 from cloudinventario.cloudinventario import CloudInventario
 from cloudinventario.helpers import CloudCollector
-#from cloudinventario_amazon_aws.collector import CloudCollectorAmazonAWS
-from cloudinventario_amazon_aws_resource import CloudInvetarioAmazonAWSResource
+from cloudinventario_amazon_aws.collector import CloudCollectorAmazonAWS
 
 # TEST MODE
 TEST = 0
@@ -17,7 +16,7 @@ TEST = 0
 def setup(name, config, defaults, options):
   return CloudCollectorAmazonAWSMulti(name, config, defaults, options)
 
-class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
+class CloudCollectorAmazonAWSMulti(CloudCollectorAmazonAWS):
 
   def __init__(self, name, config, defaults, options):
     super().__init__(name, config, defaults, options)
