@@ -58,7 +58,7 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
                 self.collector.tenant_id))
 
             return True
-        except AzureError as error
+        except AzureError as error:
             logging.error(f"AzureError: {error}")
             return False
         except Error as e:

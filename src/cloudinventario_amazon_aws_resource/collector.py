@@ -21,7 +21,8 @@ class CloudInvetarioAmazonAWSResource(CloudCollector):
 
   def check_permission(self, client, error):
     if type(error) == aws_exception.ClientError and error.response['Error']['Code'] in self.ERRORS:
-      print(f"Don't have permission for service, stoped collecting {client} because {error.response['Error']['Code']}")
+      print("Don't have permission for service, stopped collecting user: {}, because: {}".format(client, error.response['Error']['Code']))
+      logging.warning("Don't have permission for service, stopped collecting user: {}, because: {}".format(client, error.response['Error']['Code']))
       return True
     else:
       return False

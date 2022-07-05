@@ -54,6 +54,7 @@ class CloudCollector:
       if session is None or session is False:
         raise Exception("Login failed")
       self.resource_login(session)
+      return 0
     except:
       logging.error("Failed to login the following collector: {}".format(self.name))
       raise
@@ -63,7 +64,7 @@ class CloudCollector:
   def resource_login(self, session):
     for resource, res_collector in self.resource_collectors.items():
       try:
-        logging.debug("Passing session to: {}".format(resource))
+        logging.info("Passing session to: {}".format(resource))
         res_collector.login(session)
       except Exception:
         logging.error("Failed to pass session to the following resource: {}".format(resource))

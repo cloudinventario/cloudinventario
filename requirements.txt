@@ -19,3 +19,6 @@ azure-mgmt-rdbms
 azure-identity
 mysql
 mysql-connector
+
+hetzner
+proxmoxer

@@ -1,6 +1,7 @@
 """CloudInventario"""
 import os, sys, importlib, re, threading, logging
 from pprint import pprint
+import traceback
 
 from cloudinventario.storage import InventoryStorage
 
@@ -61,10 +62,14 @@ class CloudInventario:
        instance = self.loadCollector(collector, options)
        instance.login()
        instance.logout()
-       print(f"{collector}: OK")
+       print(f"+ {collector}: OK")
+       logging.info(f"{collector}: OK")
+       return 0
      except Exception as e:
-       print(f"{collector}: FAILED\n{e}")
-       logging.error(f"{collector}: FAILED\n{e}")
+       print(f"+ {collector}: FAILED\nException: {repr(e)}")
+       logging.info("", exc_info=True)
+       logging.info(f"{collector}: FAILED, Exception: {repr(e)}")
+       return 1
      finally:
        os.chdir(wd)
 
