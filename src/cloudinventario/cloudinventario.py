@@ -67,8 +67,8 @@ class CloudInventario:
        return 0
      except Exception as e:
        print(f"+ {collector}: FAILED\nException: {repr(e)}")
-       logging.info("", exc_info=True)
-       logging.info(f"{collector}: FAILED, Exception: {repr(e)}")
+       logging.warning("", exc_info=True)
+       logging.warning(f"{collector}: FAILED, Exception: {repr(e)}")
        return 1
      finally:
        os.chdir(wd)
