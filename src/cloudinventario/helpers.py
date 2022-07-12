@@ -30,7 +30,6 @@ class CloudCollector:
 
     self.resource_manager = None
     self.resource_collectors = {}
-
     return
 
   def _init(self, **kwargs):
@@ -235,7 +234,7 @@ class CloudInvetarioResourceManager:
         res_mod = importlib.import_module(mod_name)
       except Exception as e:
         logging.error("Failed to load the following module:{}, reason: {}".format(mod_name, e))
-        continue
+        raise
       obj_dict[res] = res_mod.setup(res, self.collector)
 
     return obj_dict
