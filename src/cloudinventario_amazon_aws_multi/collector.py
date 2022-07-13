@@ -21,6 +21,9 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
   def __init__(self, name, config, defaults, options):
     super().__init__(name, config, defaults, options)
 
+  def load_resource_collectors(self, res_list):
+    return None
+
   def _login(self):
     access_key = self.config['access_key']
     secret_key = self.config['secret_key']
@@ -49,7 +52,7 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
             RoleSessionName = "ASSR-{}".format(role['account'])
           )
           as_creds = assumed['Credentials']
-          self._add_creds_regions(role['name'], role['account'], as_creds['AccessKeyId'], as_creds['SecretAccessKey'], as_creds['SessionToken'], role_regions)
+          self._add_creds_regions(role['name'], str(role['account']), as_creds['AccessKeyId'], as_creds['SecretAccessKey'], as_creds['SessionToken'], role_regions)
         except Exception as error:
           logging.warning(f"AccessDenied on User: {role['account']} to perform: {role['role']}")
           if not continue_on_error:
@@ -63,7 +66,8 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
       if cred['name'] is not None:
         name = "{}@{}".format(name, cred['name'])
         self.defaults['project'] = cred['name']
-
+      
+      cred['collect'] = self.config['collect']
       handle = CloudInventario.loadCollectorModule("amazon-aws", name, cred, self.defaults, self.options)
       handle.login()
 
