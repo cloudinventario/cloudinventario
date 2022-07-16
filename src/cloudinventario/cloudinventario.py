@@ -81,14 +81,32 @@ class CloudInventario:
         finally:
             os.chdir(wd)
 
+    def doMetric(self, options, metric_name, set=1, source=None, stage=None):
+        if 'metrics' in options:
+            metric =  options['metrics'][metric_name]
+            if stage and source:
+                metric = metric.labels(stage=stage, source=source)
+            elif source:
+                metric = metric.labels(source=source)
+
+            if set == 1:
+               metric.inc()
+            else:
+               metric.set(set)
+
+    def pushMetrics(self, options):
+        if 'pushadd_prometheus' in options:
+            options['pushadd_prometheus'](options['registry'])
+        
+
     def collect(self, collector, options=None):
         # workaround for buggy libs
         wd = os.getcwd()
         os.chdir("/tmp")
         inventory = None
 
-        options['metrics']['cloudinventario_source'].inc() if 'metrics' in options else None
-        options['metrics']['cloudinventario_entries_collected'].labels(source=collector).inc() if 'metrics' in options else None
+        self.doMetric(options, 'cloudinventario_source')
+        self.doMetric(options, 'cloudinventario_entries_collected', source=collector)
         try:
             runtime_start = time.time()
             instance = self.loadCollector(collector, options)
@@ -97,25 +115,29 @@ class CloudInventario:
             instance.logout()
             runtime = time.time() - runtime_start
 
-            options['metrics']['cloudinventario_cpu_usage'].labels(source=collector).set(psutil.cpu_percent(round(runtime))) if 'metrics' in options else None
-            options['metrics']['cloudinventario_mem_usage'].labels(source=collector).set(psutil.virtual_memory()[2]) if 'metrics' in options else None
-            options['metrics']['cloudinventario_runtime'].labels(source=collector).set(runtime) if 'metrics' in options else None
-            options['metrics']['cloudinventario_success'].labels(source=collector).inc() if 'metrics' in options else None
+            self.doMetric(options, 'cloudinventario_cpu_usage', source=collector, set=psutil.cpu_percent(round(runtime)))
+            self.doMetric(options, 'cloudinventario_mem_usage', source=collector, set=psutil.virtual_memory()[2])
+            self.doMetric(options, 'cloudinventario_runtime', source=collector, set=runtime)
+            self.doMetric(options, 'cloudinventario_success', source=collector)
         except Exception as e:
           # Find stage from trackback
+            runtime = time.time() - runtime_start
+            self.doMetric(options, 'cloudinventario_cpu_usage', source=collector, set=psutil.cpu_percent(round(runtime)))
+            self.doMetric(options, 'cloudinventario_mem_usage', source=collector, set=psutil.virtual_memory()[2])
+            self.doMetric(options, 'cloudinventario_runtime', source=collector, set=runtime)
+
             tb = str(traceback.format_exc()).split('\n')
             for  index, line in enumerate(tb):
               if 'in collect' in line:
                 stage = re.search(r'instance\.(.*)\(', tb[index+1])
                 stage = stage.group(1) if stage else None 
                 break
-            options['metrics']['cloudinventario_error'].labels(source=collector, stage=stage).inc() if 'metrics' in options else None
+            self.doMetric(options, 'cloudinventario_error', source=collector, stage=stage)
             
-            logging.error(
-                "Exception while processing collector={}".format(collector)) 
+            logging.error("Exception while processing collector={}".format(collector)) 
             raise
         finally:
-            options['pushadd_prometheus'](options['registry']) if 'pushadd_prometheus' in options else None
+            self.pushMetrics(options)
             os.chdir(wd)
         return inventory
 

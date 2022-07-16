@@ -48,7 +48,7 @@ def loadConfig(config_file):
    return None
 
 # loadPrometheus
-def loadPrometheus():
+def loadPrometheus(config):
     registry = CollectorRegistry()
     metrics = dict()
     # Counter
@@ -100,7 +100,11 @@ def loadPrometheus():
         ['source'],
         registry=registry,
     )
-    return metrics, registry
+
+    prometheus_gateway = (os.getenv("PROMETHEUS_GATEWAY") or config['prometheus']['gateway'])
+    prometheus_job = (os.getenv("PROMETHEUS_JOB") or config['prometheus'].get('job', 'Cloudinventario'))
+    logging.info("PrometheusConfig with gateway={}, job={}".format(prometheus_gateway, prometheus_job))
+    return metrics, registry, prometheus_gateway, prometheus_job
 
 # collect
 def collect(data):
@@ -169,11 +173,11 @@ def main(args):
   config = loadConfig(args.config)
   cinv = CloudInventario(config)
 
-  # load prometheus (create registry, define metrics)
-  METRICS, REGISTRY = loadPrometheus()
+  # load prometheus (create registry, define metrics, load gateway and job name)
+  METRICS, REGISTRY, prometheus_gateway, prometheus_job = loadPrometheus(config)
   PUSHADD_PROMETHEUS = lambda registry: pushadd_to_gateway(
-            (os.getenv("PROMETHEUS_GATEWAY") or config['prometheus']['gateway']),
-            (os.getenv("PROMETHEUS_JOB") or config['prometheus']['job']),
+            prometheus_gateway, 
+            prometheus_job,
             registry=registry,
         )
 
@@ -225,7 +229,6 @@ def main(args):
 
       # if at least one succeeded, its SUCCESS
       for res in executor.map(collect, data):
-        # METRICS['cloudinventario_success'].labels(source=res[1]['name']).inc() if res[0] is True else METRICS['cloudinventario_error'].labels(source=res[1]['name'], stage=res[1]['stage']).inc()
         METRICS['cloudinventario_cpu_usage'].labels(source=res[1]['name']).set(res[1]['cpu_usage'])
         METRICS['cloudinventario_mem_usage'].labels(source=res[1]['name']).set(res[1]['mem_usage'])
         METRICS['cloudinventario_runtime'].labels(source=res[1]['name']).set(res[1]['runtime'])
