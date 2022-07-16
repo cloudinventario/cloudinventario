@@ -93,10 +93,10 @@ def collect(data):
 
 # sentry load and apply config
 def sentryConfig(config, level):
-  dsn = (os.getenv("SENTRY_DSN") or config['sentry']['dns'])
-  environment= (os.getenv("SENTRY_ENVIRONMENT") or config['sentry']['env'])
-  traces_sample_rate= float(os.getenv("SENTRY_TSR") or config['sentry']['tsr'])
-  event_level= int(os.getenv("SENTRY_EVENT_LEVEL") or config['sentry']['event_level'])
+  dsn = (os.getenv("SENTRY_DSN") or config['sentry']['dsn'])
+  environment= (os.getenv("SENTRY_ENVIRONMENT") or config.get('sentry').get('env', 'dev'))
+  traces_sample_rate= float(os.getenv("SENTRY_TSR") or config.get('sentry').get('tsr', '1.0'))
+  event_level= int(os.getenv("SENTRY_EVENT_LEVEL") or config.get('sentry').get('event_level', logging.ERROR))
   
   logging.info("SentryConfig with dsn={}, env={}, traces_sample_rate={}, event_lvl={}".format(dsn, environment, traces_sample_rate, event_level))
   sentry_sdk.init(
