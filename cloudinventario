@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import concurrent.futures
 import multiprocessing
-import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback
+import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil
 from pprint import pprint
+from prometheus_client import Counter, Gauge, CollectorRegistry, pushadd_to_gateway
 
 # SENTRY
 import sentry_sdk
@@ -51,6 +52,65 @@ def loadConfig(config_file):
        return yaml.safe_load(file)
    return None
 
+# loadPrometheus
+def loadPrometheus(config):
+    registry = CollectorRegistry()
+    metrics = dict()
+    # Counter
+    metrics['cloudinventario_entries_collected'] = Counter(
+        'cloudinventario_entries_collected',
+        '',
+        ['source'],
+        registry=registry,
+    )
+    metrics['cloudinventario_runtime'] = Gauge(
+        'cloudinventario_runtime',
+        '',
+        ['source'],
+        registry=registry,
+    )
+    metrics['cloudinventario_source'] = Counter(
+        'cloudinventario_source',
+        '',
+        registry=registry,
+    )
+    metrics['cloudinventario_up'] = Counter(
+        'cloudinventario_up',
+        '',
+        registry=registry,
+    )
+
+    # Gauge
+    metrics['cloudinventario_success'] = Gauge(
+        'cloudinventario_success',
+        '',
+        ['source'],
+        registry=registry,
+    )
+    metrics['cloudinventario_error'] = Gauge(
+        'cloudinventario_error',
+        '',
+        ['source', 'stage'],
+        registry=registry,
+    )
+    metrics['cloudinventario_cpu_usage'] = Gauge(
+        'cloudinventario_cpu_usage',
+        '',
+        ['source'],
+        registry=registry,
+    )
+    metrics['cloudinventario_mem_usage'] = Gauge(
+        'cloudinventario_mem_usage',
+        '',
+        ['source'],
+        registry=registry,
+    )
+
+    prometheus_gateway = (os.getenv("PROMETHEUS_GATEWAY") or config['prometheus']['gateway'])
+    prometheus_job = (os.getenv("PROMETHEUS_JOB") or config['prometheus'].get('job', 'Cloudinventario'))
+    logging.info("PrometheusConfig with gateway={}, job={}".format(prometheus_gateway, prometheus_job))
+    return metrics, registry, prometheus_gateway, prometheus_job
+
 # collect
 def collect(data):
    config = data['config']
@@ -72,24 +132,36 @@ def collect(data):
      runtime_start = time.time()
      inventory = cinv.collect(name, options)
      runtime = time.time() - runtime_start
+     cpu_usage = psutil.cpu_percent(round(runtime))
+     mem_usage = psutil.virtual_memory()[2]
 
      if inventory is not None:
         logging.info("storing data for name={}".format(name))
         cinv.store(inventory, runtime)
-        return True
+        return True, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage}
+   
      else:
         cinv.store_status(name, storage.STATUS_FAIL, runtime)
         logging.info("collector failed name={}".format(name))
    except Exception as e:
      runtime = time.time() - runtime_start
+     cpu_usage = psutil.cpu_percent(round(runtime))
+     mem_usage = psutil.virtual_memory()[2]
      trace = traceback.format_exc()
+     tb = str(traceback.format_exc()).split('\n')
+     for  index, line in enumerate(tb):
+        if 'in collect' in line:
+          stage = re.search(r'([a-z]*?)\.(.*)\(', tb[index+1])
+          stage = stage.group(2) if stage else None 
+          break
 
      cinv.store_status(name,  storage.STATUS_ERROR, runtime, trace)
      logging.error("collector failed with exception", exc_info=e)
-     return False
+     return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': stage}
    finally:
      setproctitle.setproctitle(proctitle)
-   return False
+   return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': 'end'}
+
 
 # sentry load and apply config
 def sentryConfig(config, level):
@@ -128,9 +200,17 @@ def main(args):
   cinv = CloudInventario(config)
   sentryConfig(config, level)
 
+  # load prometheus (create registry, define metrics, load gateway and job name)
+  METRICS, REGISTRY, prometheus_gateway, prometheus_job = loadPrometheus(config)
+  PUSHADD_PROMETHEUS = lambda registry: pushadd_to_gateway(
+            prometheus_gateway, 
+            prometheus_job,
+            registry=registry,
+        )
+
   options = {
     "tasks": args.tasks or 2,
-    "check_permission": True if args.check_permission else False
+    "check_permission": True if args.check_permission else False,
   }
 
   if args.prune:
@@ -145,13 +225,24 @@ def main(args):
     if args.test_login:
       return cinv.login(args.name, options)
     else:
+      options['metrics'] = METRICS
+      options['pushadd_prometheus'] = PUSHADD_PROMETHEUS
+      options['registry'] = REGISTRY
+
       inventory = cinv.collect(args.name, options) 
       cinv.store(inventory)
+
+      METRICS['cloudinventario_up'].inc() 
+      PUSHADD_PROMETHEUS(REGISTRY)
       return 0
   elif args.all:
     # force DB setup
     cinv.store(None)
 
+    for collector in cinv.collectors:
+     METRICS['cloudinventario_source'].inc()
+     METRICS['cloudinventario_entries_collected'].labels(source=collector).inc()
+     
     # execute concurently
     ret = 1
     with concurrent.futures.ProcessPoolExecutor(max_workers = args.forks or 7) as executor:
@@ -165,8 +256,16 @@ def main(args):
 
       # if at least one succeeded, its SUCCESS
       for res in executor.map(collect, data):
-        if res is True:
+        METRICS['cloudinventario_cpu_usage'].labels(source=res[1]['name']).set(res[1]['cpu_usage'])
+        METRICS['cloudinventario_mem_usage'].labels(source=res[1]['name']).set(res[1]['mem_usage'])
+        METRICS['cloudinventario_runtime'].labels(source=res[1]['name']).set(res[1]['runtime'])
+        if res[0] is True:
+          METRICS['cloudinventario_success'].labels(source=res[1]['name']).inc()
           ret = 0
+        else:
+          METRICS['cloudinventario_error'].labels(source=res[1]['name'], stage=res[1]['stage']).inc()
+    METRICS['cloudinventario_up'].inc() if ret == 0 else None
+    PUSHADD_PROMETHEUS(REGISTRY)
     return ret
   elif args.prune:
     return 0

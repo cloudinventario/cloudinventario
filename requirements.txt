@@ -19,5 +19,6 @@ mysql
 mysql-connector
 hetzner
 proxmoxer
-
+prometheus-client
+psutil
 sentry-sdk
