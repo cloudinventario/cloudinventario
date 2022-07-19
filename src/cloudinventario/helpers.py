@@ -55,7 +55,7 @@ class CloudCollector:
       self.resource_login(session)
       return 0
     except:
-      logging.error("Failed to login the following collector: {}".format(self.name))
+      logging.warning("Failed to login the following collector: {}".format(self.name))
       raise
     finally:
       self.__post_request()
@@ -66,7 +66,7 @@ class CloudCollector:
         logging.info("Passing session to: {}".format(resource))
         res_collector.login(session)
       except Exception:
-        logging.error("Failed to pass session to the following resource: {}".format(resource))
+        logging.warning("Failed to pass session to the following resource: {}".format(resource))
         raise
     return True
 

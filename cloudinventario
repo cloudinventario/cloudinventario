@@ -4,6 +4,11 @@ import multiprocessing
 import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback
 from pprint import pprint
 
+# SENTRY
+import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.excepthook import ExcepthookIntegration
+
 # XXX: this is for setproctitle
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
@@ -86,6 +91,27 @@ def collect(data):
      setproctitle.setproctitle(proctitle)
    return False
 
+# sentry load and apply config
+def sentryConfig(config, level):
+  dsn = (os.getenv("SENTRY_DSN") or config['sentry']['dsn'])
+  environment= (os.getenv("SENTRY_ENVIRONMENT") or config.get('sentry').get('env', 'dev'))
+  traces_sample_rate= float(os.getenv("SENTRY_TSR") or config.get('sentry').get('tsr', '1.0'))
+  event_level= int(os.getenv("SENTRY_EVENT_LEVEL") or config.get('sentry').get('event_level', logging.ERROR))
+  
+  logging.info("SentryConfig with dsn={}, env={}, traces_sample_rate={}, event_lvl={}".format(dsn, environment, traces_sample_rate, event_level))
+  sentry_sdk.init(
+    dsn=dsn, 
+    integrations=[
+        LoggingIntegration(
+            level=level,
+            event_level=event_level
+        ),
+        ExcepthookIntegration(always_run=True)
+    ],
+    environment=environment, 
+    traces_sample_rate=traces_sample_rate, 
+)
+
 # main
 def main(args):
 
@@ -100,6 +126,7 @@ def main(args):
   # parse config
   config = loadConfig(args.config)
   cinv = CloudInventario(config)
+  sentryConfig(config, level)
 
   options = {
     "tasks": args.tasks or 2,
