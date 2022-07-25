@@ -34,11 +34,13 @@ class CloudInventarioRds(CloudInvetarioResource):
       
   def _process_resource(self, db):
     storage = db['PendingModifiedValues'].get('AllocatedStorage') or db['AllocatedStorage']
-    instance_def = self.collector._get_instance_type(db['DBInstanceClass'][3:])
+    instance_type = db['DBInstanceClass'][3:]
+    instance_def = self.collector._get_instance_type(instance_type)
 
     data = {
       "name": db.get('DBName'),
-      "type": db['Engine'],
+      "type": instance_type,
+      "dbtype": db['Engine'],
       "cpus": instance_def["cpu"],
       "memory": instance_def["memory"],
       "location": db['AvailabilityZone'],
