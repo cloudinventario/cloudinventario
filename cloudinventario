@@ -54,6 +54,7 @@ def loadConfig(config_file):
 
 # loadPrometheus
 def loadPrometheus(config):
+
     registry = CollectorRegistry()
     metrics = dict()
     # Counter
@@ -106,10 +107,38 @@ def loadPrometheus(config):
         registry=registry,
     )
 
-    prometheus_gateway = (os.getenv("PROMETHEUS_GATEWAY") or config['prometheus']['gateway'])
-    prometheus_job = (os.getenv("PROMETHEUS_JOB") or config['prometheus'].get('job', 'Cloudinventario'))
-    logging.info("PrometheusConfig with gateway={}, job={}".format(prometheus_gateway, prometheus_job))
-    return metrics, registry, prometheus_gateway, prometheus_job
+    # options defaults
+    options = {
+      'prometheus_enabled': False,
+    }
+
+    # noop pushadd
+    pushadd = lambda: None
+
+    prometheus_gateway = os.getenv("PROMETHEUS_GATEWAY")
+    if not prometheus_gateway and 'prometheus' in config and isinstance(config['prometheus'], dict):
+      prometheus_gateway = config['prometheus'].get('gateway')
+
+    if prometheus_gateway:
+      prometheus_job = (os.getenv("PROMETHEUS_JOB") or config['prometheus'].get('job', 'Cloudinventario'))
+      logging.info("PrometheusConfig with gateway={}, job={}".format(prometheus_gateway, prometheus_job))
+
+      pushadd = lambda: pushadd_to_gateway(
+           prometheus_gateway, 
+           prometheus_job,
+           registry,
+        )
+
+      options = {**options, **{
+        'prometheus_enabled': True,
+        'prometheus_metrics': metrics,
+        'prometheus_registry': registry,
+        'prometheus_pushadd': pushadd,
+      }}
+      return metrics, pushadd, options
+
+    return metrics, pushadd, options
+
 
 # collect
 def collect(data):
@@ -139,7 +168,6 @@ def collect(data):
         logging.info("storing data for name={}".format(name))
         cinv.store(inventory, runtime)
         return True, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage}
-   
      else:
         cinv.store_status(name, storage.STATUS_FAIL, runtime)
         logging.info("collector failed name={}".format(name))
@@ -165,7 +193,13 @@ def collect(data):
 
 # sentry load and apply config
 def sentryConfig(config, level):
-  dsn = (os.getenv("SENTRY_DSN") or config['sentry']['dsn'])
+  dsn = os.getenv("SENTRY_DSN")
+  if not dsn and 'sentry' in config and isinstance(config['sentry'], dict):
+    dsn = config['sentry'].get('dsn')
+
+  if not dsn:
+    return False
+
   environment= (os.getenv("SENTRY_ENVIRONMENT") or config.get('sentry').get('env', 'dev'))
   traces_sample_rate= float(os.getenv("SENTRY_TSR") or config.get('sentry').get('tsr', '1.0'))
   event_level= int(os.getenv("SENTRY_EVENT_LEVEL") or config.get('sentry').get('event_level', logging.ERROR))
@@ -182,7 +216,8 @@ def sentryConfig(config, level):
     ],
     environment=environment, 
     traces_sample_rate=traces_sample_rate, 
-)
+  )
+  return True
 
 # main
 def main(args):
@@ -201,12 +236,7 @@ def main(args):
   sentryConfig(config, level)
 
   # load prometheus (create registry, define metrics, load gateway and job name)
-  METRICS, REGISTRY, prometheus_gateway, prometheus_job = loadPrometheus(config)
-  PUSHADD_PROMETHEUS = lambda registry: pushadd_to_gateway(
-            prometheus_gateway, 
-            prometheus_job,
-            registry=registry,
-        )
+  METRICS, PROMETHEUS_PUSHADD, prometheus_options  = loadPrometheus(config)
 
   options = {
     "tasks": args.tasks or 2,
@@ -225,15 +255,13 @@ def main(args):
     if args.test_login:
       return cinv.login(args.name, options)
     else:
-      options['metrics'] = METRICS
-      options['pushadd_prometheus'] = PUSHADD_PROMETHEUS
-      options['registry'] = REGISTRY
+      options = {**options, **prometheus_options}
 
       inventory = cinv.collect(args.name, options) 
       cinv.store(inventory)
 
-      METRICS['cloudinventario_up'].inc() 
-      PUSHADD_PROMETHEUS(REGISTRY)
+      METRICS['cloudinventario_up'].inc()
+      PROMETHEUS_PUSHADD()
       return 0
   elif args.all:
     # force DB setup
@@ -242,7 +270,7 @@ def main(args):
     for collector in cinv.collectors:
      METRICS['cloudinventario_source'].inc()
      METRICS['cloudinventario_entries_collected'].labels(source=collector).inc()
-     
+
     # execute concurently
     ret = 1
     with concurrent.futures.ProcessPoolExecutor(max_workers = args.forks or 7) as executor:
@@ -265,7 +293,7 @@ def main(args):
         else:
           METRICS['cloudinventario_error'].labels(source=res[1]['name'], stage=res[1]['stage']).inc()
     METRICS['cloudinventario_up'].inc() if ret == 0 else None
-    PUSHADD_PROMETHEUS(REGISTRY)
+    PROMETHEUS_PUSHADD()
     return ret
   elif args.prune:
     return 0

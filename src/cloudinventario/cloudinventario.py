@@ -95,9 +95,8 @@ class CloudInventario:
                metric.set(set)
 
     def pushMetrics(self, options):
-        if 'pushadd_prometheus' in options:
-            options['pushadd_prometheus'](options['registry'])
-        
+        if 'prometheus_pushadd' in options:
+            options['prometheus_pushadd']()
 
     def collect(self, collector, options=None):
         # workaround for buggy libs
