@@ -41,6 +41,7 @@ class CloudInventarioRds(CloudInvetarioResource):
       "name": db.get('DBName'),
       "type": instance_type,
       "dbtype": db['Engine'],
+      "instance_type": db['DBInstanceClass'],
       "cpus": instance_def["cpu"],
       "memory": instance_def["memory"],
       "location": db['AvailabilityZone'],
@@ -50,13 +51,12 @@ class CloudInventarioRds(CloudInvetarioResource):
       "maintenance_window": db['PreferredMaintenanceWindow'],
       "encrypted": db['StorageEncrypted'],
       "public": db['PubliclyAccessible'],
-      "instance_class": db['PendingModifiedValues'].get('DBInstanceClass') or db['DBInstanceClass'],
       "storage": storage * 1024, # in MiB
       "port": db['PendingModifiedValues'].get('Port') or db['Endpoint']['Port'],
-      "multi_az": db['PendingModifiedValues'].get('MultiAZ') or db['MultiAZ'],
-      "version": db['PendingModifiedValues'].get('EngineVersion') or db['EngineVersion'],
-      "id": db['PendingModifiedValues'].get('DBInstanceIdentifier') or db['DBInstanceIdentifier'],
-      "storage_type": db['PendingModifiedValues'].get('StorageType') or db['StorageType'],
+      "multi_az": db['MultiAZ'],
+      "version": db['EngineVersion'],
+      "id": db['DBInstanceIdentifier'],
+      "storage_type": db['StorageType'],
       "tags": self.collector._get_tags(db, "TagList")
     }
 
