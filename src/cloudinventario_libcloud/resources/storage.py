@@ -20,7 +20,7 @@ class CloudInventarioStorage(CloudInvetarioResource):
     def _login(self, config):
         self.config = config
         # self.config = self.collector.config
-        self.driver = self.config['driver']['driver_storage']
+        self.driver = self.config['driver']['storage']
 
         Storage = st_get_driver(self.driver)
         self.st_driver = Storage(

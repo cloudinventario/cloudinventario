@@ -163,7 +163,6 @@ def collect(data):
      runtime = time.time() - runtime_start
      cpu_usage = psutil.cpu_percent(round(runtime))
      mem_usage = psutil.virtual_memory()[2]
-
      if inventory is not None:
         logging.info("storing data for name={}".format(name))
         cinv.store(inventory, runtime)

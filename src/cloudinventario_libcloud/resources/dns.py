@@ -17,7 +17,7 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
     def _login(self, config):
         self.config = config
-        self.driver = self.config['driver']['driver_dns']
+        self.driver = self.config['driver']['dns']
 
         # Load driver to get provider
         DNS = dns_get_driver(self.driver)
@@ -29,7 +29,7 @@ class CloudInventarioDNS(CloudInvetarioResource):
         )
 
         logging.info("logging config for DNS with driver {}".format(self.driver))
-        
+
     def _fetch(self):
             data = []
             dns_s = self.driver_dns.list_zones()

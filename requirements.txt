@@ -22,3 +22,4 @@ proxmoxer
 prometheus-client
 psutil
 sentry-sdk
+apache-libcloud

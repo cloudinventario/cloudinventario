@@ -11,26 +11,6 @@
     * account (account id)
     * role
 
-# Collecting for EC2 (type: vm)
+# Collected data
 
-* id
-* name
-* cluster
-* project
-* type
-* cpus
-* memory
-* disks
-* storage
-* primary_ip
-* primary_fqdn
-* public_ip
-* public_fqdn
-* networks
-* storages
-* monitoring
-* owner
-* os
-* status
-* is_on
-* tags
+See [Amazon AWS Collector](../src/cloudinventario_amazon_aws)

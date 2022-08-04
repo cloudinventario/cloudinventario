@@ -17,7 +17,7 @@ class CloudInventarioLB(CloudInvetarioResource):
     def _login(self, config):
         self.config = config
         # self.config = self.collector.config
-        self.driver = self.config['driver']['driver_lb']
+        self.driver = self.config['driver']['lb']
 
         LoadBalancer = lb_get_driver(self.driver)
         self.lb_driver = LoadBalancer(

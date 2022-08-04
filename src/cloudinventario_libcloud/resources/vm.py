@@ -17,7 +17,7 @@ class CloudInventarioVM(CloudInvetarioResource):
 
     def _login(self, config):
         self.config = config
-        self.driver = self.config['driver']['driver_vm']
+        self.driver = self.config['driver']['vm']
 
         # Load driver to get provider
         ComputeEngine = get_driver(self.driver)

@@ -24,6 +24,9 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
   def load_resource_collectors(self, res_list):
     return None
 
+  def _loadCollectorModule(name, cred, defaults, options):
+    return CloudInventario.loadCollectorModule("amazon-aws", name, cred, defaults, options)
+
   def _login(self):
     access_key = self.config['access_key']
     secret_key = self.config['secret_key']
@@ -66,9 +69,9 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
       if cred['name'] is not None:
         name = "{}@{}".format(name, cred['name'])
         self.defaults['project'] = cred['name']
-      
+
       cred['collect'] = self.config['collect']
-      handle = CloudInventario.loadCollectorModule("amazon-aws", name, cred, self.defaults, self.options)
+      handle = self._loadCollectorModule(name, cred, self.defaults, self.options)
       handle.login()
 
       self.clients.append({
