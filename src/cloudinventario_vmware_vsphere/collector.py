@@ -173,7 +173,7 @@ class CloudCollectorVMWareVSphere(CloudCollector):
     res = []
     res.append(self.new_record('cluster', {
       "name": rec["name"],
-      "id": rec["id"],
+      "uniqueid": rec["id"],
       "cpus": rec["cpus"],
       "memory": rec["memory"]
     }, rec))
@@ -272,7 +272,7 @@ class CloudCollectorVMWareVSphere(CloudCollector):
     res.append(self.new_record("server", {
         "name": rec["name"],
         "project": rec["cluster"],
-        "id": rec["id"],
+        "uniqueid": rec["id"],
         "cpus": int(rec.get("cpus") or 0),
         "memory": int(rec.get("memory") or 0),
         "storage": int(rec.get("storage") or 0),
@@ -342,7 +342,7 @@ class CloudCollectorVMWareVSphere(CloudCollector):
     res = []
     res.append(self.new_record('vapp', {
       "name": rec["name"],
-      "id": rec["id"],
+      "uniqueid": rec["id"],
       "memory": (rec.get("memory") or 0)
     }, rec))
     return res
@@ -497,7 +497,7 @@ class CloudCollectorVMWareVSphere(CloudCollector):
       "cluster": rec["cluster"],
       "project": rec["vapp"],
       "description": rec["description"],
-      "id": rec["id"],
+      "uniqueid": rec["id"],
       "cpus": int(rec.get("cpus") or 0),
       "memory": int(rec.get("memory") or 0),
       "disks": int(rec.get("disks") or 0),

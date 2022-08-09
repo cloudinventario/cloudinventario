@@ -29,7 +29,6 @@ class CloudInventarioEbs(CloudInvetarioResource):
       for volume in page['Volumes']:
         data.append(self.process_resource(volume))
     return data
-      
 
   def _process_resource(self, volume):
     mounts = []
@@ -38,7 +37,7 @@ class CloudInventarioEbs(CloudInvetarioResource):
       mounts.append(mnt['InstanceId'])
 
     data = {
-    "id": volume['VolumeId'],
+    "uniqueid": volume['VolumeId'],
     "cluster": volume['AvailabilityZone'],
     "storage": volume['Size'] * 1024,  # in MB
     "type": volume['VolumeType'],

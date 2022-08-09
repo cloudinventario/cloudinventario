@@ -42,7 +42,7 @@ class CloudCollectorMicrosoftAzure(CloudCollector):
             client_id=self.client_id,
             client_secret=self.client_secret,
         )
-        
+
         logging.info("logging in MicrosoftAzure={}".format(self.subscription_id))
         return self.credential
 
@@ -62,7 +62,7 @@ class CloudCollectorMicrosoftAzure(CloudCollector):
     def _process_sql(sql, resources):
         logging.info("new Azure{} name={}".format(resources.sql_name, sql.get('name')))
         data = {
-            "id": sql.get('id'),
+            "uniqueid": sql.get('id'),
             "name": sql.get('name'),
             "type": sql.get('type'),
             "location": sql.get('location'),

@@ -51,7 +51,7 @@ class CloudInventarioAzureLoadBalancer(CloudInvetarioResource):
         logging.info("new AzureLoadBalancer name={}".format(
             balancer.get('name')))
         data = {
-            "id": balancer.get('id'),
+            "uniqueid": balancer.get('id'),
             "name": balancer.get('name'),
             "tags": balancer.get('tags', []),
             "type": balancer.get('type'),

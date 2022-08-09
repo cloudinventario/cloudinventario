@@ -67,7 +67,7 @@ class CloudCollectorGoogleGCP(CloudCollector):
         data = []
         # GET compute engine
         self.compute_engine = googleapiclient.discovery.build('compute', 'v1', credentials=self.credentials, cache_discovery=False)
-        
+
         # GET all instances with specific project name and zone (return JSON, where data are in items)
         _instance = self.compute_engine.instances()
         instances = _instance.list(project=self.project_name, zone=self.zone).execute()
@@ -116,7 +116,7 @@ class CloudCollectorGoogleGCP(CloudCollector):
 
         storages = []
         disks_size = 0
-        
+
         ## Disks version from request instances.list() 
         ## show only attached, but add type, created, blockSize, status from disks.list() request
         for disk in rec['disks']:
@@ -141,8 +141,8 @@ class CloudCollectorGoogleGCP(CloudCollector):
                 'created': created,
                 'blockSize': blockSize,
                 'status': status,
-            })    
-        
+            })
+
         logging.info("new VM name={}".format(rec["name"]))
         vm_data = {
             "created": rec["creationTimestamp"],
@@ -150,7 +150,7 @@ class CloudCollectorGoogleGCP(CloudCollector):
             "cluster": self.zone,
             "project": self.project_name,
             "description": rec["description"],
-            "id": rec["id"],
+            "uniqueid": rec["id"],
             "type": rec["machineTypeInfo"].get("name"), 
             "cpus": rec["machineTypeInfo"].get("guestCpus"),
             "memory": rec["machineTypeInfo"].get("memoryMb"),

@@ -37,12 +37,12 @@ class CloudInventarioStorage(CloudInvetarioResource):
         storages = self.st_driver.list_containers()
 
         for storage in storages:
-            storage.objects = self._process_objects(storage)             
+            storage.objects = self._process_objects(storage)
             data.append(self._process_resource(storage.__dict__))
 
         logging.info("Collected {} storages".format(len(data)))
         return data
-    
+
     def _process_objects(self, storage):
         objects_result = []
         try:
@@ -68,6 +68,7 @@ class CloudInventarioStorage(CloudInvetarioResource):
 
         logging.info("new Storage name={}".format(storage["name"]))
         data = {
+            "uniqueid", storage["name"],   # TODO: is this correct ?
             "name": storage["name"],
             "cluster": self.collector.zone,
             "project": self.collector.project_name,

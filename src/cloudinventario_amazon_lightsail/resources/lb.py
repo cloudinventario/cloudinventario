@@ -46,7 +46,7 @@ class CloudInventarioLightsailLB(CloudInvetarioResource):
       "name": balancer.get('name'),
       "cluster": location.get('regionName'),
       "location": location.get('availabilityZone'),
-      "id": balancer.get('arn'),
+      "uniqueid": balancer.get('arn'),
       "instances": health_states,
       "dns_name": balancer.get('dnsName'),
       "owner": self.collector.account_id,

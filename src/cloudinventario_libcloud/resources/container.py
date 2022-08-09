@@ -54,7 +54,7 @@ class CloudInventarioContainer(CloudInvetarioResource):
 
         logging.info("new Container name={}".format(container["name"]))
         data = {
-            "id": container["id"],
+            "uniqueid": container["id"],
             "name": container["name"],
             "cluster": self.collector.zone,
             "project": self.collector.project_name,

@@ -113,7 +113,7 @@ class CloudInventarioS3(CloudInvetarioResource):
       logging.info("The tags of the following bucket were not found: {}, you need the \"s3:GetBucketTagging\" permission".format(bucket_name))
     except Exception as error:
       raise error
-    
+
     data = {
       "acl": acl,
       "location": location,
@@ -122,7 +122,7 @@ class CloudInventarioS3(CloudInvetarioResource):
       "versioning": versioning,
       "website": website,
       "name": bucket_name,
-      "id": bucket_name,
+      "uniqueid": bucket_name,
       "owner": owner_id,
       "tags": tags
     }

@@ -48,7 +48,7 @@ class CloudInventarioVM(CloudInvetarioResource):
 
         logging.info("new VM name={}".format(rec["name"]))
         vm_data = {
-            "id": rec["id"],
+            "uniqueid": rec["id"],
             "created": rec["created_at"],
             "name": rec["name"],
             "size": rec["size"],

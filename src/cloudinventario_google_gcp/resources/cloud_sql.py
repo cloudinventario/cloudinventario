@@ -41,9 +41,9 @@ class CloudInventarioCloudSQL(CloudInvetarioResource):
       # find tier in instance
       instance_tier = instance.get('settings').get('tier') if 'settings' in instance else None
       instance['tierDetail'] = next((tier for tier in tiers.get('items', []) if str(tier.get('tier')) == instance_tier), None)
-            
+
       data.append(self._process_resource(instance))
-    
+
     logging.info("Collected {} cloudSQL".format(len(data)))
     _sqladmin.close()
     return data
@@ -62,7 +62,7 @@ class CloudInventarioCloudSQL(CloudInvetarioResource):
         'dbVersion': re.sub(r'.*_', '', instance.get('databaseVersion')),
         'dbType': re.sub(r'_.*', '', instance.get('databaseVersion')),
         'name': instance.get('name'),
-        'id': instance.get('name'),
+        'uniqueid': instance.get('name'),
         'cluster': instance.get('gceZone'),
         'project': instance.get('project'),
         'location': instance.get('region'),

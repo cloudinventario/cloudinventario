@@ -44,7 +44,7 @@ class CloudInventarioLightsailDB(CloudInvetarioResource):
       "cluster": location.get('regionName'),
       "location": location.get('availabilityZone'),
       "storage": hardware.get('diskSizeInGb', 0) * 1024,  # in MB
-      "id": db.get('arn'),
+      "uniqueid": db.get('arn'),
       "version": db.get('pendingModifiedValues', {}).get('EngineVersion') or db.get('engineVersion'),
       "owner": self.collector.account_id,
       "status": status,

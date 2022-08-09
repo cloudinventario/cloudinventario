@@ -150,7 +150,7 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
         "name": name,
         "cluster": rec["Placement"]["AvailabilityZone"],
         "description": None,
-        "id": rec["InstanceId"],
+        "uniqueid": rec["InstanceId"],
         "type": instance_type,
         "cpus": rec["CpuOptions"]["CoreCount"] or instance_def["cpu"],
         "memory": instance_def["memory"],

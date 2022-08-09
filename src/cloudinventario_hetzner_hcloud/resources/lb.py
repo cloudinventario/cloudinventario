@@ -54,7 +54,7 @@ class CloudInventariolb(CloudInvetarioResource):
 
     lbdata = {
          "name": data["name"],
-         "id": data["id"],
+         "uniqueid": data["id"],
          "created": data["created"],
          "included_traffic": data["included_traffic"],
          "ingoing_traffic": data["ingoing_traffic"],

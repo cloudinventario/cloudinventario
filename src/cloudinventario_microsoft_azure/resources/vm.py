@@ -118,7 +118,7 @@ class CloudInventarioAzureVM(CloudInvetarioResource):
             "location": vm_dict.get('location'),
             "project": group_name,
             "description": "",
-            "id": vm_dict.get('vm_id'),
+            "uniqueid": vm_dict.get('vm_id'),
             "type": vm_size,
             "cpus": vm_info.get("number_of_cores"),
             "memory": vm_info.get("memory_in_mb"),

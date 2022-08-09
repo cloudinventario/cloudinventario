@@ -132,7 +132,7 @@ class CloudInventario:
                 stage = stage.group(1) if stage else None 
                 break
             self.doMetric(options, 'cloudinventario_error', source=collector, stage=stage)
-            
+
             logging.error("Exception while processing collector={}".format(collector)) 
             raise
         finally:
