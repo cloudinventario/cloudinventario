@@ -67,7 +67,7 @@ class InventoryStorage:
 
        sa.Column('inventory_type', sa.String, nullable=False),
 
-       sa.Column('uniqueid', sa.String, nullable=False),
+       sa.Column('uniqueid', sa.String), # TODO: nullable=False),
        sa.Column('name', sa.String),
        sa.Column('cluster', sa.String),
        sa.Column('project', sa.String),
@@ -252,8 +252,7 @@ class InventoryStorage:
      for rec in data:
        if rec["source_name"] not in versions.keys():
          versions[rec["source_name"]] = 1
-         sources.append({ "id": -1,
-                          "source": rec["source_name"],
+         sources.append({ "source": rec["source_name"],
                           "version": versions[rec["source_name"]] })
        rec["source_version"] = versions.get(rec["source_name"], 1)
        source_entries.setdefault(rec["source_name"], 0)

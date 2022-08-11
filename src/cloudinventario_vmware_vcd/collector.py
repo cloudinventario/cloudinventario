@@ -76,7 +76,7 @@ class CloudCollectorVMWareVCD(CloudCollector):
 
     rec = None
     res.append(self.new_record('org', {
-      "uniqueid", org_name,
+      "uniqueid": org_name,
       "name": org_name,
     }, rec))
 
@@ -109,7 +109,7 @@ class CloudCollectorVMWareVCD(CloudCollector):
 
     logging.debug("new vdc name={}".format(vdc_name))
     res.append(self.new_record('vdc', {
-      "uniqueid", vdc_name,
+      "uniqueid": vdc_name,
       "name": vdc_name,
       "cluster": org_name,
       "description": rec.get("description"),
