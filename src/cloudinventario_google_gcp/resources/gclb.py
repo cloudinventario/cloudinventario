@@ -38,7 +38,7 @@ class CloudInventarioGclb(CloudInvetarioResource):
       _healthChecks = _compute_engine.healthChecks()
       healthChecks = self._process_health_check(_healthChecks)
       _healthChecks.close()
-    
+
       # GET all address for balancer
       _globalAddreses = _compute_engine.globalAddresses()
       globalAddress = self._process_global_address(_globalAddreses)
@@ -51,11 +51,11 @@ class CloudInventarioGclb(CloudInvetarioResource):
         balancer['instanceGroups'] = self._process_instances_group(_compute_engine, balancer)
 
         data.append(self._process_resource(balancer))
-    
+
     logging.info("Collected {} gclb".format(len(data)))
     _compute_engine.close()
     return data
-  
+
   def _process_instances_group(self, _compute_engine, balancer):
     _instanceGroups = _compute_engine.instanceGroups()
     result = []
@@ -152,7 +152,7 @@ class CloudInventarioGclb(CloudInvetarioResource):
 
     logging.info("new gclb name={}".format(balancer.get('name')))
     data = {
-      "id": balancer['id'],
+      "uniqueid": balancer['id'],
       "created": balancer['creationTimestamp'],
       "name": balancer['name'],
       "instances": balancer['healthChecks'],

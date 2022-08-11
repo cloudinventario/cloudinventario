@@ -58,7 +58,7 @@ class CloudInventarioLB(CloudInvetarioResource):
 
         logging.info("new LoadBalancer name={}".format(balancer["name"]))
         data = {
-            "id": balancer["id"],
+            "uniqueid": balancer["id"],
             "name": balancer["name"],
             "cluster": self.collector.zone,
             "project": self.collector.project_name,

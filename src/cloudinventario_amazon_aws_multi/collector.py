@@ -24,7 +24,7 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
   def load_resource_collectors(self, res_list):
     return None
 
-  def _loadCollectorModule(name, cred, defaults, options):
+  def _loadCollectorModule(self, name, cred, defaults, options):
     return CloudInventario.loadCollectorModule("amazon-aws", name, cred, defaults, options)
 
   def _login(self):

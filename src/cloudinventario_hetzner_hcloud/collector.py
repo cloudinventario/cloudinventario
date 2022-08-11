@@ -52,7 +52,7 @@ class CloudCollectorHetznerHCloud(CloudCollector):
     else:
        return obj
     return result
-    
+
   def _process_vm(self, server):
 
     data = self._to_dict(server)
@@ -100,7 +100,7 @@ class CloudCollectorHetznerHCloud(CloudCollector):
     #pprint(data)
     vm_data = {
             "created": data["created"],
-            "id": data["id"],
+            "uniqueid": data["id"],
             "name": data["name"],
             "primary_ip": data["public_net"]["ipv4"]["ip"],
             #"mac_address": None["private_net"]["mac_address"],

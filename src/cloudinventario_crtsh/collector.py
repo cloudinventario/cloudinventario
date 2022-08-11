@@ -29,7 +29,7 @@ class CloudCollectorCRTsh(CloudCollector):
         self.expired = self.config["expired"] if 'expired' in self.config else False
         self.wildcard = self.config["wildcard"] if 'wildcard' in self.config else False 
         self.deduplicate = self.config["deduplicate"] if 'deduplicate' in self.config else False
-        
+
         logging.info("logging in CRT.sh={}".format(self.identity))
         return self.identity
 
@@ -63,7 +63,7 @@ class CloudCollectorCRTsh(CloudCollector):
     def _process(self, rec):
         logging.info("new CRT log={}".format(rec.get('id')))
         data = {
-            "id": rec.get('id'),
+            "uniqueid": rec.get('id'),
             "created": rec.get('entry_timestamp'),
             "not_before": rec.get('not_before'),
             "not_after": rec.get('not_after'),

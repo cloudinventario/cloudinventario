@@ -39,7 +39,7 @@ class CloudInventarioLightsailDisks(CloudInvetarioResource):
       "cluster": location.get('regionName'),
       "location": location.get('availabilityZone'),
       "storage": disk.get('sizeInGb', 0) * 1024,  # in MB
-      "id": disk.get('arn'),
+      "uniqueid": disk.get('arn'),
       "is_system_disk": disk.get('isSystemDisk'),
       "path": disk.get('path'),
       "owner": self.collector.account_id,

@@ -51,12 +51,18 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
         logging.info("new DNS record name={}".format(record["name"]))
         data = {
-            "id": record["id"],
+            '__table': 'dns_record',
+
+            "domain_id": -1,
+            "domain_name": record["zone"].domain,
+
+            "uniqueid": record["id"],
             "name": record["name"],
-            "record_type": record["type"],
+            "type": record["type"],
             "data": str(record["data"]),
-            "domain": record["zone"].domain,
             "ttl": record["ttl"],
+
+            # TODO: add tags
         }
         return self.new_record('dns_record', data, record)
 
@@ -65,10 +71,15 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
         logging.info("new DNS domain domain={}".format(rec["domain"]))
         data = {
-            'id': dns["id"],
-            'domain': dns["domain"],
-            'domain_type': dns["type"],
+            '__table': 'dns_domain',
+
+            'uniqueid': dns["id"],
+            'name': dns["domain"],
+            'type': dns["type"],
             'ttl': dns["ttl"],
+            "description": dns["extra"].get("Comment"),
+
+            # TODO: add tags
         }
         return self.new_record('dns_domain', data, dns)
 

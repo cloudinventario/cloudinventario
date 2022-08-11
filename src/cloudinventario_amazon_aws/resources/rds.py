@@ -31,7 +31,7 @@ class CloudInventarioRds(CloudInvetarioResource):
       for db_instance in page['DBInstances']:
         data.append(self.process_resource(db_instance))
     return data
-      
+
   def _process_resource(self, db):
     storage = db['PendingModifiedValues'].get('AllocatedStorage') or db['AllocatedStorage']
     instance_type = db['DBInstanceClass'][3:]
@@ -55,7 +55,7 @@ class CloudInventarioRds(CloudInvetarioResource):
       "port": db['PendingModifiedValues'].get('Port') or db['Endpoint']['Port'],
       "multi_az": db['MultiAZ'],
       "version": db['EngineVersion'],
-      "id": db['DBInstanceIdentifier'],
+      "uniqueid": db['DBInstanceIdentifier'],
       "storage_type": db['StorageType'],
       "tags": self.collector._get_tags(db, "TagList")
     }

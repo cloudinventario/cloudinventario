@@ -97,7 +97,7 @@ class CloudCollectorProxmox(CloudCollector):
             rec['type'], rec["node"], rec.get("name")))
         vm_data = {
             "created": rec.get("uptime"),
-            "id": rec.get("id"),
+            "uniqueid": rec.get("id"),
             "project": rec.get("node"),
             "name": rec.get("name"),
             "cpus": rec.get("maxcpu"),

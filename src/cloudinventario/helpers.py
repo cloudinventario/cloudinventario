@@ -143,27 +143,41 @@ class CloudCollector:
     return None
 
   def new_record(self, rectype, attrs, details):
-    attr_keys = ["created",
-                 "name", "project", "location", "description", "id",
-                 "cpus", "memory", "disks", "storage", "primary_ip",
+    attr_keys = ["__table",
+                 "created", "uniqueid", "name", "project", "owner"]
+    attr_keys_inventory = [
+                 "location", "description",
+                 "cpus", "memory", "disks", "storage", "primary_ip", "primary_fqdn",
                  "os", "os_family",
-                 "is_on",
-                 "owner"]
+                 "is_on"]
+    attr_keys_dns = [
+                 "domain_id", "domain_name", "ttl", "type", "data"]
+
+    # TODO: handle this in separate function !
+    if attrs.get('__table') in ['dns_domain', 'dns_record']:
+       attr_keys = attr_keys + attr_keys_dns
+    else:
+       attr_keys = attr_keys + attr_keys_inventory
+
+    # apply defaults
     attrs = {**self.defaults, **attrs}
 
     attr_json_keys = [ "networks", "storages", "tags"]
     rec = {
-      "type": rectype,
-      "source": self.name,
+      "source_id": -1,		# TODO: should be mapped during save
+      "source_name": self.name,
+      "source_version": None,
+
+      "inventory_type": rectype,
+
       "attributes": None
     }
 
     for key in attr_keys:
-      if not attrs.get(key):
-        rec[key] = None
+      if attrs.get(key):
+        rec[key] = attrs.pop(key)
       else:
-        rec[key] = attrs[key]
-        del(attrs[key])
+        rec[key] = None
 
 #    for key in attr_tag_keys:
 #      data = attrs.get(key, [])
