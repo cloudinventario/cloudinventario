@@ -240,6 +240,8 @@ class CloudInvetarioResourceManager:
     res_list = []
     res_list.extend(self.dep_classif["dependency"] or [])
     res_list.extend(self.dep_classif["not_dependency"] or [])
+    if res_list:
+      res_list.sort()
 
     for res in res_list:
       try:

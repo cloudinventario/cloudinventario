@@ -37,6 +37,8 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
     session_token = self.config.get('session_token')
     self.region = region = self.config['region']
     self.account_id = self.config.get('account_id')
+    if self.account_id:
+      self.defaults['owner'] = self.account_id
 
     for logger in ["boto3", "botocore", "urllib3"]:
       logging.getLogger(logger).propagate = False
@@ -72,8 +74,7 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
       if not next_token:
         break
     return data
-      
-      
+
   def _get_instance_type(self, itype):
     if itype not in self.instance_types:
       types = self.client.describe_instance_types(InstanceTypes = [ itype ])
@@ -173,14 +174,5 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
 
     return self.new_record('vm', vm_data, rec)
 
-  def new_record(self, rectype, attrs, details):
-    attrs_extra = {
-        "owner": self.account_id,
-    }
-    attrs = {**attrs, **attrs_extra}
-    return super().new_record(rectype, attrs, details)
-
   def _logout(self):
     self.client = None
-
-

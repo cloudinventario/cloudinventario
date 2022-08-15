@@ -16,6 +16,7 @@ class CloudInventarioDNS(CloudInvetarioResource):
         super().__init__(resource, collector)
 
     def _login(self, config):
+        pprint(config)
         self.config = config
         self.driver = self.config['driver']['dns']
 
