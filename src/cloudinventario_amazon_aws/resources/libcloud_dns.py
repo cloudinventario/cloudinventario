@@ -33,10 +33,6 @@ class CloudInventarioLibcloudDNS(CloudInvetarioResource):
     config['driver_params']['token'] = self.collector.config.get('session_token')
     config['collect'] = ['dns']
 
-#    defaults = {**self.collector.defaults}}
-#    defaults[
-#    self.account_id = self.config.get('account_id')
-
     self.handle = CloudInventario.loadCollectorModule("libcloud", self.collector.name, config,
                     self.collector.defaults, self.collector.options)
     self.handle.resource_login(config)
