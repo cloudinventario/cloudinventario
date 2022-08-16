@@ -37,8 +37,6 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
     session_token = self.config.get('session_token')
     self.region = region = self.config['region']
     self.account_id = self.config.get('account_id')
-    if self.account_id:
-      self.defaults['owner'] = self.account_id
 
     for logger in ["boto3", "botocore", "urllib3"]:
       logging.getLogger(logger).propagate = False
@@ -48,6 +46,9 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
       sts = boto3.client('sts', aws_access_key_id = access_key, aws_secret_access_key = secret_key)
       ident = sts.get_caller_identity()
       self.account_id = ident['Account']
+
+    if self.account_id:
+      self.defaults['owner'] = self.account_id
 
     logging.info("logging in AWS account_id={}, region={}".format(self.account_id, region))
     self.session = boto3.Session(aws_access_key_id = access_key, aws_secret_access_key = secret_key,
