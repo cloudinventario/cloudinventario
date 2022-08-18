@@ -22,4 +22,5 @@ proxmoxer
 prometheus-client
 psutil
 sentry-sdk
-apache-libcloud
+#apache-libcloud
+https://github.com/promitilus/libcloud/archive/refs/heads/trunk.zip
