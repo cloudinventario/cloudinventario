@@ -245,7 +245,7 @@ class InventoryStorage:
      versions = {}
      for source in sources:
        source["version"] += 1
-       versions[source["source"]] = source["source"]
+       versions[source["source"]] = source["version"]
 
      # collect data sources versions
      source_entries = {}
@@ -285,6 +285,7 @@ class InventoryStorage:
      # store data
      with self.engine.begin() as conn:
        conn.execute(self.source_table.insert(), sources_save)
+
        for table in data_to_insert.keys():
           if len(data_to_insert[table]) > 0:
             conn.execute(self.TABLES[table].insert(), data_to_insert[table])
