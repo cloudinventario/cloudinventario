@@ -72,7 +72,7 @@ class CloudInventarioStorage(CloudInvetarioResource):
             "versioning": bucket['versioning'].get('enabled') if 'versioning' in bucket else False,
             "website": bucket['website'] if 'website' in bucket else bucket['selfLink'],
             "name": bucket['name'],
-            "id": bucket['id'],
+            "uniqueid": bucket['id'],
             "created": bucket['timeCreated'],
             "project": self.project_name
         }

@@ -17,7 +17,7 @@ class CloudInventarioVM(CloudInvetarioResource):
 
     def _login(self, config):
         self.config = config
-        self.driver = self.config['driver']['driver_vm']
+        self.driver = self.config['driver']['vm']
 
         # Load driver to get provider
         ComputeEngine = get_driver(self.driver)
@@ -48,7 +48,7 @@ class CloudInventarioVM(CloudInvetarioResource):
 
         logging.info("new VM name={}".format(rec["name"]))
         vm_data = {
-            "id": rec["id"],
+            "uniqueid": rec["id"],
             "created": rec["created_at"],
             "name": rec["name"],
             "size": rec["size"],

@@ -31,14 +31,13 @@ class CloudInventarioSnapshot(CloudInvetarioResource):
       data.append(self._process_resource(snapshot))
     logging.info("collected {} snapshosts".format(len(data)))
     return data
-      
 
   def _process_resource(self, snapshot):
     GIB_TO_MIB = 1024
 
     logging.info("collecting snapshot with ID={}".format(snapshot.id))
     data = {
-    'id': snapshot.id,
+    'uniqueid': snapshot.id,
     'data_encryption_key_id': snapshot.data_encryption_key_id,
     'description': snapshot.description,
     'encrypted': snapshot.encrypted,

@@ -17,7 +17,7 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
     def _login(self, config):
         self.config = config
-        self.driver = self.config['driver']['driver_dns']
+        self.driver = self.config['driver']['dns']
 
         # Load driver to get provider
         DNS = dns_get_driver(self.driver)
@@ -29,7 +29,7 @@ class CloudInventarioDNS(CloudInvetarioResource):
         )
 
         logging.info("logging config for DNS with driver {}".format(self.driver))
-        
+
     def _fetch(self):
             data = []
             dns_s = self.driver_dns.list_zones()
@@ -51,12 +51,18 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
         logging.info("new DNS record name={}".format(record["name"]))
         data = {
-            "id": record["id"],
+            '__table': 'dns_record',
+
+            "domain_id": -1,
+            "domain_name": record["zone"].domain,
+
+            "uniqueid": record["id"],
             "name": record["name"],
-            "record_type": record["type"],
+            "type": record["type"],
             "data": str(record["data"]),
-            "domain": record["zone"].domain,
             "ttl": record["ttl"],
+
+            # TODO: add tags
         }
         return self.new_record('dns_record', data, record)
 
@@ -65,10 +71,15 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
         logging.info("new DNS domain domain={}".format(rec["domain"]))
         data = {
-            'id': dns["id"],
-            'domain': dns["domain"],
-            'domain_type': dns["type"],
+            '__table': 'dns_domain',
+
+            'uniqueid': dns["id"],
+            'name': dns["domain"],
+            'type': dns["type"],
             'ttl': dns["ttl"],
+            "description": dns["extra"].get("Comment"),
+
+            # TODO: add tags
         }
         return self.new_record('dns_domain', data, dns)
 

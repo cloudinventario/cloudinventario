@@ -30,7 +30,6 @@ class CloudCollector:
 
     self.resource_manager = None
     self.resource_collectors = {}
-
     return
 
   def _init(self, **kwargs):
@@ -56,7 +55,7 @@ class CloudCollector:
       self.resource_login(session)
       return 0
     except:
-      logging.error("Failed to login the following collector: {}".format(self.name))
+      logging.warning("Failed to login the following collector: {}".format(self.name))
       raise
     finally:
       self.__post_request()
@@ -67,7 +66,7 @@ class CloudCollector:
         logging.info("Passing session to: {}".format(resource))
         res_collector.login(session)
       except Exception:
-        logging.error("Failed to pass session to the following resource: {}".format(resource))
+        logging.warning("Failed to pass session to the following resource: {}".format(resource))
         raise
     return True
 
@@ -144,27 +143,41 @@ class CloudCollector:
     return None
 
   def new_record(self, rectype, attrs, details):
-    attr_keys = ["created",
-                 "name", "project", "location", "description", "id",
-                 "cpus", "memory", "disks", "storage", "primary_ip",
+    attr_keys = ["__table",
+                 "created", "uniqueid", "name", "project", "owner"]
+    attr_keys_inventory = [
+                 "location", "description",
+                 "cpus", "memory", "disks", "storage", "primary_ip", "primary_fqdn",
                  "os", "os_family",
-                 "is_on",
-                 "owner"]
+                 "is_on"]
+    attr_keys_dns = [
+                 "domain_id", "domain_name", "ttl", "type", "data"]
+
+    # TODO: handle this in separate function !
+    if attrs.get('__table') in ['dns_domain', 'dns_record']:
+       attr_keys = attr_keys + attr_keys_dns
+    else:
+       attr_keys = attr_keys + attr_keys_inventory
+
+    # apply defaults
     attrs = {**self.defaults, **attrs}
 
     attr_json_keys = [ "networks", "storages", "tags"]
     rec = {
-      "type": rectype,
-      "source": self.name,
+      "source_id": -1,		# TODO: should be mapped during save
+      "source_name": self.name,
+      "source_version": None,
+
+      "inventory_type": rectype,
+
       "attributes": None
     }
 
     for key in attr_keys:
-      if not attrs.get(key):
-        rec[key] = None
+      if attrs.get(key):
+        rec[key] = attrs.pop(key)
       else:
-        rec[key] = attrs[key]
-        del(attrs[key])
+        rec[key] = None
 
 #    for key in attr_tag_keys:
 #      data = attrs.get(key, [])
@@ -227,6 +240,8 @@ class CloudInvetarioResourceManager:
     res_list = []
     res_list.extend(self.dep_classif["dependency"] or [])
     res_list.extend(self.dep_classif["not_dependency"] or [])
+    if res_list:
+      res_list.sort()
 
     for res in res_list:
       try:
@@ -235,7 +250,7 @@ class CloudInvetarioResourceManager:
         res_mod = importlib.import_module(mod_name)
       except Exception as e:
         logging.error("Failed to load the following module:{}, reason: {}".format(mod_name, e))
-        continue
+        raise
       obj_dict[res] = res_mod.setup(res, self.collector)
 
     return obj_dict

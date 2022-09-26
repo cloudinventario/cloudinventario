@@ -21,7 +21,7 @@ class CloudInventariolb(CloudInvetarioResource):
   def _fetch(self):
     data = []
     vinfo = self.collector.client.volumes.get_all()
-    
+
     for volume in vinfo:
       data.append(self._process_collector(volume))
     return data
@@ -29,16 +29,13 @@ class CloudInventariolb(CloudInvetarioResource):
   def _process_collector(self,volume):
     volume = self.collector._to_dict(volume)
 
-
-
     vinfo = {
-     "id": volume["id"],
-     "name": volume["name"],
-     "location": volume['location']["name"],
-     "storage": volume['size'] * 1024,  # in MB
-     "type": volume['linux_device'],
-     "is_on": (volume['status'] == "available"),
-
-     }
+      "uniqueid": volume["id"],
+      "name": volume["name"],
+      "location": volume['location']["name"],
+      "storage": volume['size'] * 1024,  # in MB
+      "type": volume['linux_device'],
+      "is_on": (volume['status'] == "available"),
+    }
 
     return self.new_record(self.res_type, vinfo, volume) 

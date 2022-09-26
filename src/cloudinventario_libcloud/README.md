@@ -5,11 +5,11 @@
 * key
 * secret
 * driver
-    * driver_vm
-    * driver_lb
-    * driver_storage
-    * driver_container
-    * driver_dns
+    * vm
+    * lb
+    * storage
+    * container
+    * dns
 * driver_params
 
 # Collecting for VMs (type: vm)

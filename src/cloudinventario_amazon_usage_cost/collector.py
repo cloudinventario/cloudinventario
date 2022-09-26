@@ -104,10 +104,12 @@ class CloudCollectorAmazonUsageCost(CloudInvetarioAmazonAWSResource):
     unit = result[0].get('Total').get('AmortizedCost').get('Unit')
 
     logging.info("new Usage and Cost record with period_type={}".format(period_type))
-    data={
+    data = {
+            "__table": "usage_cost",
+
             "period_type": period_type,
-            "from": start_date,
-            "to": end_date,
+            "period_from": start_date,
+            "period_to": end_date,
 
             "cost": amortizedCost,
             "unit": unit,
@@ -116,5 +118,3 @@ class CloudCollectorAmazonUsageCost(CloudInvetarioAmazonAWSResource):
 
   def _logout(self):
     self.client = None
-
-

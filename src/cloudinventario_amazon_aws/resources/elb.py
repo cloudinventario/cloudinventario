@@ -63,7 +63,7 @@ class CloudInventarioElb(CloudInvetarioResource):
             "created": balancer['CreatedTime'],
             "name": balancer['LoadBalancerName'],
             "cluster": balancer['AvailabilityZones'],
-            "id": balancer['CanonicalHostedZoneNameID'],
+            "uniqueid": balancer['CanonicalHostedZoneNameID'],
             "instances": health_states,
             "public_fqdn": balancer['CanonicalHostedZoneName'],
             "owner": self.collector.account_id,

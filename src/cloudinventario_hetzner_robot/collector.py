@@ -81,7 +81,7 @@ class CloudCollectorHetznerRobot(CloudCollector):
       })
 
     server_data = {
-      "id": server.number, 
+      "uniqueid": server.number, 
       "name": server.name,
       "primary_ip": server.ip,
       "status": server.status,

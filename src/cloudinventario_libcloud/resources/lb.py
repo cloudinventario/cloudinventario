@@ -17,7 +17,7 @@ class CloudInventarioLB(CloudInvetarioResource):
     def _login(self, config):
         self.config = config
         # self.config = self.collector.config
-        self.driver = self.config['driver']['driver_lb']
+        self.driver = self.config['driver']['lb']
 
         LoadBalancer = lb_get_driver(self.driver)
         self.lb_driver = LoadBalancer(
@@ -58,7 +58,7 @@ class CloudInventarioLB(CloudInvetarioResource):
 
         logging.info("new LoadBalancer name={}".format(balancer["name"]))
         data = {
-            "id": balancer["id"],
+            "uniqueid": balancer["id"],
             "name": balancer["name"],
             "cluster": self.collector.zone,
             "project": self.collector.project_name,

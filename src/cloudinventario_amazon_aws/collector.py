@@ -16,7 +16,6 @@ def setup(name, config, defaults, options):
 class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
 
   def __init__(self, name, config, defaults, options):
-    self.error = ['AccessDenied', 'UnauthorizedOperation']
     super().__init__(name, config, defaults, options)
 
   def _config_keys():
@@ -48,6 +47,9 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
       ident = sts.get_caller_identity()
       self.account_id = ident['Account']
 
+    if self.account_id:
+      self.defaults['owner'] = self.account_id
+
     logging.info("logging in AWS account_id={}, region={}".format(self.account_id, region))
     self.session = boto3.Session(aws_access_key_id = access_key, aws_secret_access_key = secret_key,
                                   aws_session_token = session_token, region_name = region)
@@ -73,8 +75,7 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
       if not next_token:
         break
     return data
-      
-      
+
   def _get_instance_type(self, itype):
     if itype not in self.instance_types:
       types = self.client.describe_instance_types(InstanceTypes = [ itype ])
@@ -151,7 +152,7 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
         "name": name,
         "cluster": rec["Placement"]["AvailabilityZone"],
         "description": None,
-        "id": rec["InstanceId"],
+        "uniqueid": rec["InstanceId"],
         "type": instance_type,
         "cpus": rec["CpuOptions"]["CoreCount"] or instance_def["cpu"],
         "memory": instance_def["memory"],
@@ -174,14 +175,5 @@ class CloudCollectorAmazonAWS(CloudInvetarioAmazonAWSResource):
 
     return self.new_record('vm', vm_data, rec)
 
-  def new_record(self, rectype, attrs, details):
-    attrs_extra = {
-        "owner": self.account_id,
-    }
-    attrs = {**attrs, **attrs_extra}
-    return super().new_record(rectype, attrs, details)
-
   def _logout(self):
     self.client = None
-
-

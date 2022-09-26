@@ -21,6 +21,8 @@ class InventoryStorage:
      self.conn = None
      self.version = 0
 
+
+
    def __del__(self):
      if self.conn:
        self.disconnect()
@@ -44,9 +46,11 @@ class InventoryStorage:
      meta = sa.MetaData()
      self.source_table = sa.Table(TABLE_PREFIX + 'source', meta,
        sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+
        sa.Column('ts', sa.String, default=sa.func.now()),
        sa.Column('source', sa.String),
        sa.Column('version', sa.Integer, default=1),
+
        sa.Column('runtime', sa.Integer),
        sa.Column('entries', sa.Integer),
        sa.Column('status', sa.String),
@@ -56,16 +60,18 @@ class InventoryStorage:
      )
 
      self.inventory_table = sa.Table(TABLE_PREFIX + 'inventory', meta,
-       sa.Column('inventory_id', sa.Integer, primary_key=True, autoincrement=True),
-       sa.Column('version', sa.Integer),
+       sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+       sa.Column('source_id', sa.Integer, nullable=True),
+       sa.Column('source_name', sa.String, nullable=False),
+       sa.Column('source_version', sa.Integer, nullable=False),
 
-       sa.Column('source', sa.String),
-       sa.Column('type', sa.String),
+       sa.Column('inventory_type', sa.String, nullable=False),
+
+       sa.Column('uniqueid', sa.String), # TODO: nullable=False),
        sa.Column('name', sa.String),
        sa.Column('cluster', sa.String),
        sa.Column('project', sa.String),
        sa.Column('location', sa.String),
-       sa.Column('id', sa.String),
        sa.Column('created', sa.String),
 
        sa.Column('cpus', sa.Integer),
@@ -74,6 +80,7 @@ class InventoryStorage:
        sa.Column('storage', sa.Integer),
 
        sa.Column('primary_ip', sa.String),
+       sa.Column('primary_fqdn', sa.String),
 
        sa.Column('os', sa.String),
        sa.Column('os_family', sa.String),
@@ -81,67 +88,112 @@ class InventoryStorage:
        sa.Column('status', sa.String),
        sa.Column('is_on', sa.Integer),
 
-       sa.Column('owner', sa.String),
-       sa.Column('tags', sa.Text),
-
        sa.Column('networks', sa.String),
        sa.Column('storages', sa.String),
 
+       sa.Column('owner', sa.String),
+       sa.Column('tags', sa.Text),
+
        sa.Column('description', sa.String),
-       sa.Column('attributes', sa.Text),
-       sa.Column('details', sa.Text),
-
-       sa.UniqueConstraint('version', 'source', 'type', 'name', "cluster", 'project', 'id')
-     )
-
-     self.dns_record = sa.Table(TABLE_PREFIX + 'dns_record', meta,
-       sa.Column('id', sa.String),
-       sa.Column('name', sa.String),
-       sa.Column('record_type', sa.String),
-       sa.Column('domain', sa.String),
-       sa.Column('ttl', sa.String),
-
-       sa.Column('type', sa.String),
-       sa.Column('source', sa.String),
-       sa.Column('version', sa.Integer),
-
-       sa.Column('data', sa.Text),
 
        sa.Column('attributes', sa.Text),
        sa.Column('details', sa.Text),
+
+       sa.UniqueConstraint('source_version', 'source_name', 'inventory_type', 'name', "cluster", 'project', 'uniqueid')
      )
 
      self.dns_domain = sa.Table(TABLE_PREFIX + 'dns_domain', meta,
-       sa.Column('id', sa.String),
-       sa.Column('domain', sa.String ),
-       sa.Column('domain_type', sa.String),
+       sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+
+       sa.Column('source_id', sa.Integer, nullable=True),
+       sa.Column('source_name', sa.String, nullable=False),
+       sa.Column('source_version', sa.Integer, nullable=False),
+
+       sa.Column('inventory_type', sa.String, nullable=False),
+
+       sa.Column('cluster', sa.String),
+       sa.Column('project', sa.String),
+       sa.Column('created', sa.String),
+
+       sa.Column('uniqueid', sa.String, nullable=False),
+       sa.Column('name', sa.String),
+       sa.Column('type', sa.String),
        sa.Column('ttl', sa.String),
 
-       sa.Column('type', sa.String),
-       sa.Column('source', sa.String),
-       sa.Column('version', sa.Integer),
+       sa.Column('owner', sa.String),
+       sa.Column('tags', sa.Text),
+
+       sa.Column('description', sa.String),
 
        sa.Column('attributes', sa.Text),
        sa.Column('details', sa.Text),
+
+       #sa.UniqueConstraint('source_version', 'source_name', 'inventory_type', 'name', 'uniqueid')  # TODO !
+     )
+
+     self.dns_record = sa.Table(TABLE_PREFIX + 'dns_record', meta,
+       sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+
+       sa.Column('source_id', sa.Integer, nullable=False),
+       sa.Column('source_name', sa.String, nullable=False),
+       sa.Column('source_version', sa.Integer, nullable=False),
+
+       sa.Column('domain_id', sa.Integer, nullable=False),
+       sa.Column('domain_name', sa.String, nullable=False),
+
+       sa.Column('inventory_type', sa.String, nullable=False),
+
+       sa.Column('cluster', sa.String),
+       sa.Column('project', sa.String),
+       sa.Column('created', sa.String),
+
+       sa.Column('uniqueid', sa.String, nullable=False),
+       sa.Column('name', sa.String),
+       sa.Column('type', sa.String),
+       sa.Column('ttl', sa.String),
+       sa.Column('data', sa.Text),
+
+       sa.Column('owner', sa.String),
+       sa.Column('tags', sa.Text),
+
+       sa.Column('description', sa.String),
+
+       sa.Column('attributes', sa.Text),
+       sa.Column('details', sa.Text),
+
+       #sa.UniqueConstraint('source_version', 'source_name', 'inventory_type', 'name', 'uniqueid') # TODO !
      )
 
      self.usage_cost = sa.Table(TABLE_PREFIX + 'usage_cost', meta,
+       sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+
+       sa.Column('source_id', sa.Integer, nullable=False),
+       sa.Column('source_name', sa.String, nullable=False),
+       sa.Column('source_version', sa.Integer, nullable=False),
+
+       sa.Column('inventory_type', sa.String, nullable=False),
+
        sa.Column('period_type', sa.String),
-       sa.Column('from', sa.String),
-       sa.Column('to', sa.String),
+       sa.Column('period_from', sa.String),
+       sa.Column('period_to', sa.String),
 
-       sa.Column('type', sa.String),
-       sa.Column('source', sa.String),
-       sa.Column('version', sa.Integer),
-
+       sa.Column('cost_centre', sa.String),
        sa.Column('cost', sa.Float),
        sa.Column('unit', sa.String),
 
        sa.Column('attributes', sa.Text),
        sa.Column('details', sa.Text),
+       sa.Column('attachment', sa.LargeBinary),
      )
 
      meta.create_all(self.engine, checkfirst = True)
+
+     self.TABLES = {
+       'inventory':  self.inventory_table,
+       'dns_domain': self.dns_domain,
+       'dns_record': self.dns_record,
+       'usage_cost': self.usage_cost,
+     }
      return True
 
    def __prepare(self):
@@ -171,8 +223,9 @@ class InventoryStorage:
      version = self.__get_source_version_max(source)
 
      data = {
-       "source": source,
-       "version": version + 1,
+       "source_id": -1,
+       "source_name": source,
+       "source_version": version + 1,
        "status": status,
        "runtime": runtime,
        "error": error
@@ -195,39 +248,36 @@ class InventoryStorage:
        versions[source["source"]] = source["version"]
 
      # collect data sources versions
-     entries = {}
+     source_entries = {}
      for rec in data:
-       if rec["source"] not in versions.keys():
-         versions[rec["source"]] = 1
-         sources.append({ "source": rec["source"],
-                          "version": versions[rec["source"]] })
-       rec["version"] = versions.get(rec["source"], 1)
-       entries.setdefault(rec["source"], 0)
-       entries[rec["source"]] += 1
+       if rec["source_name"] not in versions.keys():
+         versions[rec["source_name"]] = 1
+         sources.append({ "source": rec["source_name"],
+                          "version": versions[rec["source_name"]] })
+       rec["source_version"] = versions.get(rec["source_name"], 1)
+       source_entries.setdefault(rec["source_name"], 0)
+       source_entries[rec["source_name"]] += 1
 
      # save entry counts
      sources_save = []
      for source in sources:
-       if not source["source"] in entries:
+       if not source["source"] in source_entries:
          continue
-       source["entries"] = entries[source["source"]]
+       source["entries"] = source_entries[source["source"]]
        source["status"] = STATUS_OK
        source["runtime"] = runtime
        sources_save.append(source)
-     
-     # Uses dict to sorting data by their type, now only dns_record, dns_domain
+
+     # known tables
      data_to_insert = dict()
-     # to work normaly with every type of data (vm, storage...) remove *this
-     data_to_insert['inventory_table'] = []
+     for table in self.TABLES.keys():
+       data_to_insert[table] = []
+
      for item in data:
-      # * from 
-       if item['type'] not in ['dns_domain', 'dns_record', 'usage_cost']:
-         data_to_insert['inventory_table'].append(item)
-       else:
-       # * to 
-        if item['type'] not in data_to_insert:
-          data_to_insert[item['type']] = []
-        data_to_insert[item['type']].append(dict(item, **json.loads(item['attributes'])))
+         table = item.pop('__table', 'inventory') or 'inventory'
+
+         data_to_insert[table].append(item)
+#         data_to_insert[table].append(dict(item, **json.loads(item['attributes'])))
 
      if len(sources) == 0:
        return False
@@ -235,10 +285,10 @@ class InventoryStorage:
      # store data
      with self.engine.begin() as conn:
        conn.execute(self.source_table.insert(), sources_save)
-       conn.execute(self.dns_record.insert(), data_to_insert['dns_record']) if 'dns_record' in data_to_insert else None
-       conn.execute(self.dns_domain.insert(), data_to_insert['dns_domain']) if 'dns_domain' in data_to_insert else None
-       conn.execute(self.usage_cost.insert(), data_to_insert['usage_cost']) if 'usage_cost' in data_to_insert else None
-       conn.execute(self.inventory_table.insert(), data_to_insert['inventory_table'])
+
+       for table in data_to_insert.keys():
+          if len(data_to_insert[table]) > 0:
+            conn.execute(self.TABLES[table].insert(), data_to_insert[table])
      return True
 
    def cleanup(self, days):
@@ -251,22 +301,16 @@ class InventoryStorage:
      with self.engine.begin() as conn:
        for row in res:
          logging.debug("prune: source={}, version={}".format(row["source"], row["version"]))
-         conn.execute(self.inventory_table.delete().where(
-               (self.inventory_table.c.source == row["source"]) &
-                  (self.inventory_table.c.version == row["version"])
-           ))
          conn.execute(self.source_table.delete().where(
                (self.source_table.c.source == row["source"]) &
                   (self.source_table.c.version == row["version"])
            ))
-         conn.execute(self.dns_record.delete().where(
-               (self.dns_record.c.source == row["source"]) &
-                  (self.dns_record.c.version == row["version"])
-           ))
-         conn.execute(self.dns_domain.delete().where(
-               (self.dns_domain.c.source == row["source"]) &
-                  (self.dns_domain.c.version == row["version"])
-           ))
+
+         for table in self.TABLES.keys():
+           conn.execute(self.TABLES[table].delete().where(
+                 (self.TABLES[table].c.source_name == row["source"]) &
+                    (self.TABLES[table].c.source_version == row["version"])
+             ))
      return True
 
    def disconnect(self):

@@ -31,14 +31,17 @@ class CloudInventarioRds(CloudInvetarioResource):
       for db_instance in page['DBInstances']:
         data.append(self.process_resource(db_instance))
     return data
-      
+
   def _process_resource(self, db):
     storage = db['PendingModifiedValues'].get('AllocatedStorage') or db['AllocatedStorage']
-    instance_def = self.collector._get_instance_type(db['DBInstanceClass'][3:])
+    instance_type = db['DBInstanceClass'][3:]
+    instance_def = self.collector._get_instance_type(instance_type)
 
     data = {
       "name": db.get('DBName'),
-      "type": db['Engine'],
+      "type": instance_type,
+      "dbtype": db['Engine'],
+      "instance_type": db['DBInstanceClass'],
       "cpus": instance_def["cpu"],
       "memory": instance_def["memory"],
       "location": db['AvailabilityZone'],
@@ -48,13 +51,12 @@ class CloudInventarioRds(CloudInvetarioResource):
       "maintenance_window": db['PreferredMaintenanceWindow'],
       "encrypted": db['StorageEncrypted'],
       "public": db['PubliclyAccessible'],
-      "instance_class": db['PendingModifiedValues'].get('DBInstanceClass') or db['DBInstanceClass'],
       "storage": storage * 1024, # in MiB
       "port": db['PendingModifiedValues'].get('Port') or db['Endpoint']['Port'],
-      "multi_az": db['PendingModifiedValues'].get('MultiAZ') or db['MultiAZ'],
-      "version": db['PendingModifiedValues'].get('EngineVersion') or db['EngineVersion'],
-      "id": db['PendingModifiedValues'].get('DBInstanceIdentifier') or db['DBInstanceIdentifier'],
-      "storage_type": db['PendingModifiedValues'].get('StorageType') or db['StorageType'],
+      "multi_az": db['MultiAZ'],
+      "version": db['EngineVersion'],
+      "uniqueid": db['DBInstanceIdentifier'],
+      "storage_type": db['StorageType'],
       "tags": self.collector._get_tags(db, "TagList")
     }
 

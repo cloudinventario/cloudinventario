@@ -84,7 +84,7 @@ class CloudCollectorAmazonLightsail(CloudCollectorAmazonAWS):
       "name": instance.get('name'),
       "cluster": location.get('regionName'),
       "location": location.get('availabilityZone'),  # cluster or location?
-      "id": instance.get('arn'),
+      "uniqueid": instance.get('arn'),
       "type": instance.get('bundleId'),
       "cpus": hardware.get('cpuCount'),
       "memory": hardware.get('ramSizeInGb') * 1024, # in MB

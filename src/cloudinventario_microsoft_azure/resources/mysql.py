@@ -37,7 +37,7 @@ class CloudInventarioAzureMysql(CloudInvetarioResource):
             raise error
 
 
-    def _fetch(self):        
+    def _fetch(self):
         return CloudCollectorMicrosoftAzure._fetch_sql(self)
 
     def _logout(self):
