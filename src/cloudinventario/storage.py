@@ -288,6 +288,15 @@ class InventoryStorage:
 
        for table in data_to_insert.keys():
           if len(data_to_insert[table]) > 0:
+            for item in data_to_insert[table]:
+              source_entity = conn.execute(
+                self.source_table
+                .select(self.source_table.c.id)
+                .where(self.source_table.c.version == item['source_version'])
+                .where(self.source_table.c.source.like(item['source_name']))
+                ).fetchall()
+              item['source_id'] = source_entity[0].id
+
             conn.execute(self.TABLES[table].insert(), data_to_insert[table])
      return True
 
