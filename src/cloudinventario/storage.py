@@ -1,4 +1,5 @@
 import logging, re
+from pkgutil import iter_modules
 from pprint import pprint
 from datetime import datetime, timedelta
 from sqlalchemy.pool import NullPool
@@ -284,20 +285,14 @@ class InventoryStorage:
 
      # store data
      with self.engine.begin() as conn:
-       conn.execute(self.source_table.insert(), sources_save)
+      result = conn.execute(self.source_table.insert(), sources_save)
 
-       for table in data_to_insert.keys():
-          if len(data_to_insert[table]) > 0:
-            for item in data_to_insert[table]:
-              source_entity = conn.execute(
-                self.source_table
-                .select(self.source_table.c.id)
-                .where(self.source_table.c.version == item['source_version'])
-                .where(self.source_table.c.source.like(item['source_name']))
-                ).fetchall()
-              item['source_id'] = source_entity[0].id
+      for table in data_to_insert.keys():
+        if len(data_to_insert[table]) > 0:
+          for item in data_to_insert[table]:
+            item['source_id'] = result.lastrowid
 
-            conn.execute(self.TABLES[table].insert(), data_to_insert[table])
+          conn.execute(self.TABLES[table].insert(), data_to_insert[table])
      return True
 
    def cleanup(self, days):
