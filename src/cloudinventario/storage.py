@@ -286,11 +286,14 @@ class InventoryStorage:
      # store data
      with self.engine.begin() as conn:
       result = conn.execute(self.source_table.insert(), sources_save)
+      sources = dict()
+      for index, source in enumerate(sources_save):
+        sources[source['source'] + '|' + str(source['version'])] = result.inserted_primary_key[index]
 
       for table in data_to_insert.keys():
         if len(data_to_insert[table]) > 0:
           for item in data_to_insert[table]:
-            item['source_id'] = result.lastrowid
+            item['source_id'] = sources[item['source_name'] + "|" + str(item['source_version'])]
 
           conn.execute(self.TABLES[table].insert(), data_to_insert[table])
      return True
