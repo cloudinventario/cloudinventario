@@ -4,6 +4,8 @@ import datetime
 import json
 import logging
 import importlib
+import dns.resolver
+import dns.exception
 from pprint import pprint
 
 import cloudinventario.platform as platform
@@ -27,6 +29,12 @@ class CloudCollector:
     self.allow_self_signed = options.get('allow_self_signed', config.get('allow_self_signed', False))
     self.verify_ssl = self.options.get('verify_ssl_certs', config.get('verify_ssl_certs', True))
     requests.packages.urllib3.disable_warnings()
+
+    # TODO: separate this ?
+    self.resolver = dns.resolver.Resolver()
+    self.resolver.timeout = 1
+    self.resolver.lifetime = 1
+    self.resolver.use_search_by_default = False
 
     self.resource_manager = None
     self.resource_collectors = {}
@@ -142,6 +150,19 @@ class CloudCollector:
   def _get_dependencies(self):
     return None
 
+  def _resolve_fqdn(self, fqdn):
+    try:
+      result = self.resolver.query(fqdn, "A")
+      a_list = []
+      for val in result:
+        a_list.append(val.to_text())
+      pprint(a_list)
+      if len(result) > 0:
+        return a_list[0]
+    except dns.exception.DNSException:
+      pass
+    return None
+
   def new_record(self, rectype, attrs, details):
     attr_keys = ["__table",
                  "created", "uniqueid", "name", "project", "owner"]
@@ -179,6 +200,13 @@ class CloudCollector:
       else:
         rec[key] = None
 
+    fqdn_keys = filter(lambda k: k.endswith("_fqdn"), rec.keys())
+    for key in fqdn_keys:
+      if rec[key] is not None and rec[key] != '':
+        key_ip = "{}_ip".format(key[0:-5])
+        if key_ip in rec and rec[key_ip] is None:
+          rec[key_ip] = self._resolve_fqdn(rec[key])
+
 #    for key in attr_tag_keys:
 #      data = attrs.get(key, [])
 #      rec[key] = ",".join(map(lambda k: "{}={}".format(k, data[k]), data.keys()))
@@ -200,7 +228,8 @@ class CloudCollector:
         else:
           rec[key] = value
 
-    if "os_family" not in attrs.keys() and rec.get("os"):
+
+    if "os_family" not in rec and rec.get("os"):
       rec["os_family"] = platform.get_os_family(rec.get("os"), rec.get("description"))
 
     if rec.get("os"):

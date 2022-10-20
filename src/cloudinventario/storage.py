@@ -278,7 +278,6 @@ class InventoryStorage:
          table = item.pop('__table', 'inventory') or 'inventory'
 
          data_to_insert[table].append(item)
-#         data_to_insert[table].append(dict(item, **json.loads(item['attributes'])))
 
      if len(sources) == 0:
        return False

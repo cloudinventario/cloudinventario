@@ -22,5 +22,7 @@ proxmoxer
 prometheus-client
 psutil
 sentry-sdk
+dnspython
+
 #apache-libcloud
 https://github.com/promitilus/libcloud/archive/refs/heads/trunk.zip

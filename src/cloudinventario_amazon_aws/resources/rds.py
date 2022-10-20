@@ -1,4 +1,4 @@
-import boto3, json
+import boto3, json, logging
 from pprint import pprint
 
 import botocore.exceptions as aws_exception
@@ -36,11 +36,17 @@ class CloudInventarioRds(CloudInvetarioResource):
     storage = db['PendingModifiedValues'].get('AllocatedStorage') or db['AllocatedStorage']
     instance_type = db['DBInstanceClass'][3:]
     instance_def = self.collector._get_instance_type(instance_type)
+    name = db.get('DBName') or db['DBInstanceIdentifier']
+
+    logging.debug("new RDS name={}".format(name))
 
     data = {
-      "name": db.get('DBName'),
+      "name": name,
       "type": instance_type,
       "dbtype": db['Engine'],
+      "os_family": "AWS {}".format(db['Engine']),
+      "dbversion": db['EngineVersion'],
+      "os": "AWS {} {}".format(db['Engine'], db['EngineVersion']),
       "instance_type": db['DBInstanceClass'],
       "cpus": instance_def["cpu"],
       "memory": instance_def["memory"],
@@ -49,6 +55,7 @@ class CloudInventarioRds(CloudInvetarioResource):
       "created": db['InstanceCreateTime'],
       "status": db['DBInstanceStatus'],
       "is_on": (db['DBInstanceStatus'] == "available" and 1 or 0),
+      "primary_ip": None,
       "primary_fqdn": db['Endpoint']['Address'],
       "maintenance_window": db['PreferredMaintenanceWindow'],
       "dbencrypted": db['StorageEncrypted'],
@@ -56,7 +63,6 @@ class CloudInventarioRds(CloudInvetarioResource):
       "storage": storage * 1024, # in MiB
       "port": db['Endpoint']['Port'],
       "multi_az": db['MultiAZ'],
-      "version": db['EngineVersion'],
       "uniqueid": db['DBInstanceIdentifier'],
       "storage_type": db['StorageType'],
       "storage_iops": db.get('Iops'),
