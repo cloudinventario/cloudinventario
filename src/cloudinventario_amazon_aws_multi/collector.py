@@ -122,13 +122,17 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
 
   def _fetch(self, collect):
     res = []
-    for client in self.clients:
-      try:
-        data = client['handle'].fetch(collect)
-        res.extend(data)
-      except Exception as e:
-        logging.error("Exception while processing account={}".format(client['account_id']))
-        raise
+    with concurrent.futures.ThreadPoolExecutor(max_workers = self.options["tasks"] or 1) as executor:
+      futures = []
+      for client in self.clients:
+         futures.append(executor.submit(client['handle'].fetch, collect))
+      for future in concurrent.futures.as_completed(futures):
+        try:
+          res.extend(future.result())
+        except Exception as e:
+          logging.error("Exception while processing account={}".format(client['account_id']))
+          raise
+
     return res
 
   def _logout(self):
