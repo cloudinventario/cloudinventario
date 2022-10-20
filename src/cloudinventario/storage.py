@@ -224,8 +224,8 @@ class InventoryStorage:
 
      data = {
        "source_id": -1,
-       "source_name": source,
-       "source_version": version + 1,
+       "source": source,
+       "version": version + 1,
        "status": status,
        "runtime": runtime,
        "error": error

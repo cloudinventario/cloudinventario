@@ -182,8 +182,8 @@ def collect(data):
           stage = stage.group(2) if stage else None 
           break
 
-     cinv.store_status(name,  storage.STATUS_ERROR, runtime, trace)
-     logging.error("collector failed with exception", exc_info=e)
+     cinv.store_status(name, storage.STATUS_ERROR, runtime, trace)
+     logging.error("collector name={} failed with exception".format(name), exc_info=e)
      return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': stage}
    finally:
      setproctitle.setproctitle(proctitle)
