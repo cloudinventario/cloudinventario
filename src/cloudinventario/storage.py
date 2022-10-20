@@ -285,10 +285,13 @@ class InventoryStorage:
 
      # store data
      with self.engine.begin() as conn:
-      result = conn.execute(self.source_table.insert(), sources_save)
       sources = dict()
-      for index, source in enumerate(sources_save):
-        sources[source['source'] + '|' + str(source['version'])] = result.inserted_primary_key[index]
+
+      for source_save in sources_save:
+        result = conn.execute(self.source_table.insert(), [source_save])
+
+        for index, source in enumerate([source_save]):
+          sources[source['source'] + '|' + str(source['version'])] = result.inserted_primary_key[index]
 
       for table in data_to_insert.keys():
         if len(data_to_insert[table]) > 0:
