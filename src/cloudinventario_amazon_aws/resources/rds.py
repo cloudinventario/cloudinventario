@@ -62,7 +62,7 @@ class CloudInventarioRds(CloudInvetarioResource):
       "storage_iops": db.get('Iops'),
       "auto_minor_upgrade": db['AutoMinorVersionUpgrade'],
       "dbuser": db['MasterUsername'],
-      "dbname": db['DBName'],
+      "dbname": db.get('DBName'),
       "is_public": db['PubliclyAccessible'],
       "tags": self.collector._get_tags(db, "TagList")
     }
