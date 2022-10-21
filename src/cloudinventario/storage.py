@@ -1,4 +1,5 @@
 import logging, re
+from pkgutil import iter_modules
 from pprint import pprint
 from datetime import datetime, timedelta
 from sqlalchemy.pool import NullPool
@@ -224,8 +225,8 @@ class InventoryStorage:
 
      data = {
        "source_id": -1,
-       "source_name": source,
-       "source_version": version + 1,
+       "source": source,
+       "version": version + 1,
        "status": status,
        "runtime": runtime,
        "error": error
@@ -277,18 +278,26 @@ class InventoryStorage:
          table = item.pop('__table', 'inventory') or 'inventory'
 
          data_to_insert[table].append(item)
-#         data_to_insert[table].append(dict(item, **json.loads(item['attributes'])))
 
      if len(sources) == 0:
        return False
 
      # store data
      with self.engine.begin() as conn:
-       conn.execute(self.source_table.insert(), sources_save)
+      sources = dict()
 
-       for table in data_to_insert.keys():
-          if len(data_to_insert[table]) > 0:
-            conn.execute(self.TABLES[table].insert(), data_to_insert[table])
+      for source_save in sources_save:
+        result = conn.execute(self.source_table.insert(), [source_save])
+
+        for index, source in enumerate([source_save]):
+          sources[source['source'] + '|' + str(source['version'])] = result.inserted_primary_key[index]
+
+      for table in data_to_insert.keys():
+        if len(data_to_insert[table]) > 0:
+          for item in data_to_insert[table]:
+            item['source_id'] = sources[item['source_name'] + "|" + str(item['source_version'])]
+
+          conn.execute(self.TABLES[table].insert(), data_to_insert[table])
      return True
 
    def cleanup(self, days):

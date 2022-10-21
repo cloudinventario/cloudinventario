@@ -1,4 +1,4 @@
-import json, logging, traceback
+import json, logging, traceback, time
 from pprint import pprint
 
 from libcloud.dns.providers import get_driver as dns_get_driver
@@ -42,6 +42,9 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
                 # Process domain/zone
                 data.append(self._process_dns(dns.__dict__))
+
+                # Slow down as we make many requests
+                time.sleep(1/4)
 
             logging.info("Collected {} dns".format(len(data)))
             return data

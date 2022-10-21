@@ -158,14 +158,21 @@ def collect(data):
      # Check if testing login
      if args.test_login:
         return cinv.login(name, options)
+
+     proc = psutil.Process()
+     proc.cpu_percent(0.1)
      runtime_start = time.time()
+
      inventory = cinv.collect(name, options)
+
      runtime = time.time() - runtime_start
-     cpu_usage = psutil.cpu_percent(round(runtime))
+     cpu_usage = proc.cpu_percent()
      mem_usage = psutil.virtual_memory()[2]
+
      if inventory is not None:
         logging.info("storing data for name={}".format(name))
         cinv.store(inventory, runtime)
+        logging.debug("collector name={} finished".format(name))
         return True, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage}
      else:
         cinv.store_status(name, storage.STATUS_FAIL, runtime)
@@ -182,13 +189,12 @@ def collect(data):
           stage = stage.group(2) if stage else None 
           break
 
-     cinv.store_status(name,  storage.STATUS_ERROR, runtime, trace)
-     logging.error("collector failed with exception", exc_info=e)
+     cinv.store_status(name, storage.STATUS_ERROR, runtime, trace)
+     logging.error("collector name={} failed with exception".format(name), exc_info=e)
      return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': stage}
    finally:
      setproctitle.setproctitle(proctitle)
    return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': 'end'}
-
 
 # sentry load and apply config
 def sentryConfig(config, level):

@@ -1,4 +1,4 @@
-import boto3, json
+import boto3, json, logging
 from pprint import pprint
 
 import botocore.exceptions as aws_exception
@@ -36,27 +36,40 @@ class CloudInventarioRds(CloudInvetarioResource):
     storage = db['PendingModifiedValues'].get('AllocatedStorage') or db['AllocatedStorage']
     instance_type = db['DBInstanceClass'][3:]
     instance_def = self.collector._get_instance_type(instance_type)
+    name = db.get('DBName') or db['DBInstanceIdentifier']
+
+    logging.debug("new RDS name={}".format(name))
 
     data = {
-      "name": db.get('DBName'),
+      "name": name,
       "type": instance_type,
       "dbtype": db['Engine'],
+      "os_family": "AWS {}".format(db['Engine']),
+      "dbversion": db['EngineVersion'],
+      "os": "AWS {} {}".format(db['Engine'], db['EngineVersion']),
       "instance_type": db['DBInstanceClass'],
       "cpus": instance_def["cpu"],
       "memory": instance_def["memory"],
-      "location": db['AvailabilityZone'],
+      "cluster": db['AvailabilityZone'],
+      "clusterid": db.get('DBClusterIdentifier'),
       "created": db['InstanceCreateTime'],
       "status": db['DBInstanceStatus'],
-      "address": db['Endpoint']['Address'],
+      "is_on": (db['DBInstanceStatus'] == "available" and 1 or 0),
+      "primary_ip": None,
+      "primary_fqdn": db['Endpoint']['Address'],
       "maintenance_window": db['PreferredMaintenanceWindow'],
-      "encrypted": db['StorageEncrypted'],
+      "dbencrypted": db['StorageEncrypted'],
       "public": db['PubliclyAccessible'],
       "storage": storage * 1024, # in MiB
-      "port": db['PendingModifiedValues'].get('Port') or db['Endpoint']['Port'],
+      "port": db['Endpoint']['Port'],
       "multi_az": db['MultiAZ'],
-      "version": db['EngineVersion'],
       "uniqueid": db['DBInstanceIdentifier'],
       "storage_type": db['StorageType'],
+      "storage_iops": db.get('Iops'),
+      "auto_minor_upgrade": db['AutoMinorVersionUpgrade'],
+      "dbuser": db['MasterUsername'],
+      "dbname": db.get('DBName'),
+      "is_public": db['PubliclyAccessible'],
       "tags": self.collector._get_tags(db, "TagList")
     }
 
