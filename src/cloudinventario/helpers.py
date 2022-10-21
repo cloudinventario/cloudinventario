@@ -156,8 +156,8 @@ class CloudCollector:
       a_list = []
       for val in result:
         a_list.append(val.to_text())
-      pprint(a_list)
       if len(result) > 0:
+        a_list.sort()
         return a_list[0]
     except dns.exception.DNSException:
       pass
