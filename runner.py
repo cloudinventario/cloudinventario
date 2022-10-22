@@ -36,6 +36,7 @@ def main(args):
     config = loadConfig(args.config)
     response_results = []
 
+    print(f"Load runner len_col={len(config['collectors'])}, len_end={len(config['endpoints'])}, max_process={config['process']['tasks']}")
     for collector in config['collectors']:
         index = 0
         while (1):
@@ -44,13 +45,14 @@ def main(args):
             response = status(host, port)
             data = response.json()
             if data['not_finished_tasks'] < config['process']['tasks']:
-                print(f"[+] Sending {collector} collector to {(host, port)} host, port")
+                print(f"Sending collector={collector} to host, port={(host, port)}")
                 response = collect(host, port, config['collectors'], collector)
                 response_results.append(response.json())
-                print(f"[+] Get respond {response.json()['status']}")
+                print(f"\tGet respond='{response.json()['status']}'")
                 break
             else:
                 if (index + 1) == len(config['endpoints']):
+                    # print(f"Use all endpoints, staring again")
                     index = 0
                 else:
                     index += 1

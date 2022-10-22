@@ -42,9 +42,10 @@ def metrics():
 
 @app.route("/status/<job_id>")
 def status_job(job_id):
-  print("statusjob", job_id)
+  logging.info(f"Status about job={job_id}")
   if job_id in TASKS:
     if executor.futures.done(job_id):
+      TASKS.remove(job_id)
       future = executor.futures.pop(job_id)
       doMetrics(future, METRICS_DICT)
       return {"status": "success", "result": future.result()}
@@ -55,34 +56,32 @@ def status_job(job_id):
 
 @app.route("/status")
 def status():
-  finished_tasks = 0
   finished_task_id = []
 
   for task in TASKS:
     if executor.futures.done(task):
-      TASKS.remove(task)
       finished_task_id.append(task)
-      finished_tasks += 1
 
+      TASKS.remove(task)
       future = executor.futures.pop(task)
       doMetrics(future, METRICS_DICT)
-  return {
-    "status": "Success",
-    "finished_tasks": finished_tasks,
+  result =  {
+    "status": "success",
+    "finished_tasks": len(finished_task_id),
     "not_finished_tasks": len(TASKS),
     "names_finished_tasks": finished_task_id,
     "names_not_finished_tasks": TASKS,
     }
+  logging.info(f"Status about tasks={result}")
+  return result
 # curl -X GET http://0.0.0.0:8000/status
 
 @app.route("/collect", methods=["POST"])
 def collect():
     collector_config = request.get_json()
-    print("[+] --> ", collector_config)
-    logging.info(f"Processing collector {collector_config['collectors'].keys()}")
+    logging.info(f"[+] Processing collector {collector_config['collectors'].keys()}")
     collector_config['storage'] = CONFIG['storage'] 
     cinv = CloudInventario(collector_config)
-    # cinv.store(None)
 
     try:
       ids = {}
@@ -102,11 +101,13 @@ def collect():
         # future_result = future_result.result() # sync
 
         METRICS_DICT['cloudinventario_up'].inc() if executor.futures.done(id) else None
-      return {"status": "Success", "task_id": str(ids)}
+      return {"status": "success", "task_id": str(ids)}
     except Exception as e: 
       print(traceback.format_exc())
-      return {"status": "Error", "exception": str(e)}
+      return {"status": "error", "exception": str(e)}
+# curl -X POST -H "Content-Type: application/json" -d '{"collectors": {"aws1": {"module": "amazon-aws","config": {"access_key": "","secret_key": "", "region": "eu-west-1","collect": ["snapshot"]}}}}' http://0.0.0.0:8000/collect
 
+# --- HELPERS METHOD ---
 def doMetrics(future, metrics_dict):
   future_result = future.result()
   metrics_dict['cloudinventario_cpu_usage'].labels(source=future_result[1]['name']).set(future_result[1]['cpu_usage'])
@@ -166,49 +167,49 @@ def collect(data):
    return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': 'end'}
 
 # --- CONFIGS ---
-# create metrics and registry for Prometheus
+# create metrics for Prometheus
 def prometheusConfig():
-    metrics_dict = dict()
-    metrics_dict['cloudinventario_entries_collected'] = Counter(
-        'cloudinventario_entries_collected',
-        'Number of collected Cloudinventario entries',
-        ['source']
-    )
-    metrics_dict['cloudinventario_source'] = Counter(
-        'cloudinventario_source',
-        'Count of Cloudinventario source'
-    )
-    metrics_dict['cloudinventario_up'] = Counter(
-        'cloudinventario_up',
-        'if last Cloudinventario was success'
-    )
-
-    metrics_dict['cloudinventario_runtime'] = Gauge(
-        'cloudinventario_runtime',
-        'Runtime for cloudinventario',
-        ['source']
-    )
-    metrics_dict['cloudinventario_success'] = Gauge(
-        'cloudinventario_success',
-        'How many Cloudinventario ended as success',
-        ['source']
-    )
-    metrics_dict['cloudinventario_error'] = Gauge(
-        'cloudinventario_error',
-        'How many Cloudinventario ended as error',
-        ['source', 'stage']
-    )
-    metrics_dict['cloudinventario_cpu_usage'] = Gauge(
-        'cloudinventario_cpu_usage',
-        'How much CPU was used during collection Cloudinventario entry',
-        ['source']
-    )
-    metrics_dict['cloudinventario_mem_usage'] = Gauge(
-        'cloudinventario_mem_usage',
-        'How much CPU was used during collection Cloudinventario entry',
-        ['source']
-    )
-    return metrics_dict
+  logging.info("Prometheus initializing metrics")
+  metrics_dict = dict()
+  metrics_dict['cloudinventario_entries_collected'] = Counter(
+      'cloudinventario_entries_collected',
+      'Number of collected Cloudinventario entries',
+      ['source']
+  )
+  metrics_dict['cloudinventario_source'] = Counter(
+      'cloudinventario_source',
+      'Count of Cloudinventario source'
+  )
+  metrics_dict['cloudinventario_up'] = Counter(
+      'cloudinventario_up',
+      'if last Cloudinventario was success'
+  )
+  metrics_dict['cloudinventario_runtime'] = Gauge(
+      'cloudinventario_runtime',
+      'Runtime for cloudinventario',
+      ['source']
+  )
+  metrics_dict['cloudinventario_success'] = Gauge(
+      'cloudinventario_success',
+      'How many Cloudinventario ended as success',
+      ['source']
+  )
+  metrics_dict['cloudinventario_error'] = Gauge(
+      'cloudinventario_error',
+      'How many Cloudinventario ended as error',
+      ['source', 'stage']
+  )
+  metrics_dict['cloudinventario_cpu_usage'] = Gauge(
+      'cloudinventario_cpu_usage',
+      'How much CPU was used during collection Cloudinventario entry',
+      ['source']
+  )
+  metrics_dict['cloudinventario_mem_usage'] = Gauge(
+      'cloudinventario_mem_usage',
+      'How much CPU was used during collection Cloudinventario entry',
+      ['source']
+  )
+  return metrics_dict
 
 # load config and init for Sentry
 def sentryConfig():
@@ -235,7 +236,6 @@ def sentryConfig():
     traces_sample_rate=traces_sample_rate, 
   )
   return True
-# export SENTRY_LEVEL=40 SENTRY_DSN=https://f27cb7376403487a8d068ca2edaa0863@o1307650.ingest.sentry.io/6552197 SENTRY_ENVIRONMENT=dev SENTRY_TSR=1.0 SENTRY_EVENT_LEVEL=40
 
 # process port and host from args (easer option for more services)
 def getArgs():
@@ -248,24 +248,30 @@ def getArgs():
 def processesConfig():
   args = getArgs()
   app.config['EXECUTOR_TYPE'] = 'process'#'thread'
-  app.config['EXECUTOR_MAX_WORKERS'] = os.getenv('PROCESS_FORKS') or 1
+  app.config['EXECUTOR_MAX_WORKERS'] = int(os.getenv('PROCESS_FORKS') or 1)
+  logging.info(f"Confif with EXECUTOR_MAX_WORKERS={os.getenv('PROCESS_FORKS') or 1}, PROCESS_TASKS={os.getenv('PROCESS_TASKS')}")
   return {
     'storage': {'dsn': os.getenv('STORAGE_DSN')},
     'process': {
-      'forks': os.getenv('PROCESS_FORKS'),
-      'tasks': os.getenv('PROCESS_TASKS'),
+      'forks': int(os.getenv('PROCESS_FORKS') or 1),
+      'tasks': int(os.getenv('PROCESS_TASKS') or 1),
       'die_after_request': os.getenv('PROCESS_DIE_AFTER_REQUEST')
     },
     'endpoint_host': args.host if args.host else os.getenv('ENDPOINT_HOST'),
     'endpoint_port': args.port if args.port else os.getenv('ENDPOINT_PORT')
   }
-# export ENDPOINT_PORT=8000 ENDPOINT_HOST=0.0.0.0 PROCESS_FORKS=2 PROCESS_TASKS=1 PROCESS_DIE_AFTER_REQUEST=False STORAGE_DSN=sqlite:///cloudinventory.db
+# export ENDPOINT_PORT=8000 ENDPOINT_HOST=0.0.0.0 PROCESS_FORKS=2 PROCESS_TASKS=1 PROCESS_DIE_AFTER_REQUEST=False STORAGE_DSN=sqlite:///cloudinventory.db SENTRY_LEVEL=40 SENTRY_DSN=https://f27cb7376403487a8d068ca2edaa0863@o1307650.ingest.sentry.io/6552197 SENTRY_ENVIRONMENT=dev SENTRY_TSR=1.0 SENTRY_EVENT_LEVEL=40
 
 if __name__ == '__main__':
+  # Load config form env and args port/host
   CONFIG = processesConfig()
+  # Create metrics
   METRICS_DICT = prometheusConfig()
+  # Initializing sentry logging 
   sentryConfig()
+  logging.info(f"Initializing DB with url {CONFIG['storage']}")
   cinv = CloudInventario({'storage': CONFIG['storage']})
   cinv.store(None)
 
+  logging.info(f"Running server with {CONFIG['endpoint_host']}:{CONFIG['endpoint_port']}")
   app.run(debug=True, host=CONFIG['endpoint_host'], port=CONFIG['endpoint_port'])
