@@ -44,7 +44,6 @@ def main(args):
             port = config['endpoints'][index]['port']
             response = status(host, port)
             data = response.json()
-            # if data['not_finished_tasks'] < config['process']['tasks']:
             if data['code'] == 200:
                 print(f"Sending collector={collector} to host, port={(host, port)}")
                 response = collect(host, port, config['collectors'], collector)
@@ -53,7 +52,6 @@ def main(args):
                 break
             else:
                 if (index + 1) == len(config['endpoints']):
-                    # print(f"Use all endpoints, staring again")
                     index = 0
                 else:
                     index += 1

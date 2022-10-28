@@ -29,3 +29,4 @@ https://github.com/promitilus/libcloud/archive/refs/heads/trunk.zip
 
 flask
 flask_executor
+requests

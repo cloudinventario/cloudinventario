@@ -71,7 +71,7 @@ def status():
     "not_finished_tasks": len(TASKS),
     "names_finished_tasks": finished_task_id,
     "names_not_finished_tasks": TASKS,
-    "code": 200 if CONFIG['process']['tasks'] > len(TASKS) else 429
+    "code": 200 if CONFIG['process']['tasks'] >= len(TASKS) else 429
     }
   logging.info(f"Status about tasks={result}")
   return result
