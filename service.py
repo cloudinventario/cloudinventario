@@ -71,6 +71,7 @@ def status():
     "not_finished_tasks": len(TASKS),
     "names_finished_tasks": finished_task_id,
     "names_not_finished_tasks": TASKS,
+    "code": 200 if CONFIG['process']['tasks'] > len(TASKS) else 429
     }
   logging.info(f"Status about tasks={result}")
   return result
@@ -132,24 +133,35 @@ def collect(data):
    logging.info("collector name={}".format(name))
    runtime_start = time.time()
    try:
-     # Check if testing login
+    # # Check if testing login
     #  if args.test_login:
     #     return cinv.login(name, options)
+    
+     proc = psutil.Process()
+     proc.cpu_percent(0.1)
      runtime_start = time.time()
+
      inventory = cinv.collect(name, options)
+
      runtime = time.time() - runtime_start
-     cpu_usage = psutil.cpu_percent(round(runtime))
+     cpu_usage = proc.cpu_percent()
      mem_usage = psutil.virtual_memory()[2]
+
      if inventory is not None:
         logging.info("storing data for name={}".format(name))
         cinv.store(inventory, runtime)
+        logging.debug("collector name={} finished".format(name))
         return True, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage}
      else:
         cinv.store_status(name, storage.STATUS_FAIL, runtime)
         logging.info("collector failed name={}".format(name))
    except Exception as e:
+    # Not added to error previous -> # cpu_usage = psutil.cpu_percent(round(runtime))
+     proc_error = psutil.Process()
+     proc_error.cpu_percent(0.1)
+     cpu_usage = proc.cpu_percent() if proc else proc_error.cpu_percent()
+
      runtime = time.time() - runtime_start
-     cpu_usage = psutil.cpu_percent(round(runtime))
      mem_usage = psutil.virtual_memory()[2]
      trace = traceback.format_exc()
      tb = str(traceback.format_exc()).split('\n')
@@ -159,8 +171,8 @@ def collect(data):
           stage = stage.group(2) if stage else None 
           break
 
-     cinv.store_status(name,  storage.STATUS_ERROR, runtime, trace)
-     logging.error("collector failed with exception", exc_info=e)
+     cinv.store_status(name, storage.STATUS_ERROR, runtime, trace)
+     logging.error("collector name={} failed with exception".format(name), exc_info=e)
      return False, {'name': name, 'runtime': runtime, 'cpu_usage': cpu_usage, 'mem_usage': mem_usage, 'stage': stage}
    finally:
      setproctitle.setproctitle(proctitle)
@@ -189,12 +201,12 @@ def prometheusConfig():
       'Runtime for cloudinventario',
       ['source']
   )
-  metrics_dict['cloudinventario_success'] = Gauge(
+  metrics_dict['cloudinventario_success'] = Counter(
       'cloudinventario_success',
       'How many Cloudinventario ended as success',
       ['source']
   )
-  metrics_dict['cloudinventario_error'] = Gauge(
+  metrics_dict['cloudinventario_error'] = Counter(
       'cloudinventario_error',
       'How many Cloudinventario ended as error',
       ['source', 'stage']
