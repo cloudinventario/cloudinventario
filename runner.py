@@ -5,6 +5,8 @@ import logging
 import argparse
 import yaml
 import requests
+import time
+import random
 
 def getArgs():
     parser = argparse.ArgumentParser(description='CloudInventory args')
@@ -44,19 +46,20 @@ def main(args):
             port = config['endpoints'][index]['port']
             response = status(host, port)
             data = response.json()
-            if data['code'] == 200:
+            if data['ready']:
                 print(f"Sending collector={collector} to host, port={(host, port)}")
                 response = collect(host, port, config['collectors'], collector)
                 response_results.append(response.json())
                 print(f"\tGet respond='{response.json()['status']}'")
-                break
-            else:
-                if (index + 1) == len(config['endpoints']):
-                    index = 0
-                else:
-                    index += 1
+                if response.json()['code'] == 200:
+                    break
+            if (index + 1) == len(config['endpoints']):
+                index = -1 
+                time.sleep((250 + random.randint(1,250)) * 0.001)
+            index += 1
     return response_results
 
 args = getArgs()
 ret = main(args)
+print(f"Returned {len(ret)}")
 sys.exit(ret)

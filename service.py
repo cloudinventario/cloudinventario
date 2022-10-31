@@ -10,6 +10,8 @@ import re
 import traceback
 import argparse
 
+from threading import Lock 
+
 # Flask
 from flask import Flask, request
 from flask_executor import Executor
@@ -33,6 +35,7 @@ app = Flask(__name__)
 executor = Executor(app)
 CONFIG, METRICS_DICT = None, None
 TASKS = []
+LOCK = Lock()
 
 # --- ROUTES ---
 @app.route("/metrics")
@@ -56,22 +59,14 @@ def status_job(job_id):
 
 @app.route("/status")
 def status():
-  finished_task_id = []
-
-  for task in TASKS:
-    if executor.futures.done(task):
-      finished_task_id.append(task)
-
-      TASKS.remove(task)
-      future = executor.futures.pop(task)
-      doMetrics(future, METRICS_DICT)
+  finished_task_id = check_tasks()
   result =  {
     "status": "success",
     "finished_tasks": len(finished_task_id),
     "not_finished_tasks": len(TASKS),
     "names_finished_tasks": finished_task_id,
     "names_not_finished_tasks": TASKS,
-    "code": 200 if CONFIG['process']['tasks'] >= len(TASKS) else 429
+    "ready": True if CONFIG['process']['tasks'] > len(TASKS) else False
     }
   logging.info(f"Status about tasks={result}")
   return result
@@ -83,6 +78,13 @@ def collect():
     logging.info(f"[+] Processing collector {collector_config['collectors'].keys()}")
     collector_config['storage'] = CONFIG['storage'] 
     cinv = CloudInventario(collector_config)
+
+    # Remove tasks, that are finished. Check if queue is full if yes release lock
+    check_tasks()
+    LOCK.acquire()
+    if len(TASKS) == CONFIG['process']['tasks']:
+      LOCK.release()
+      return {"status": "error", "code": 429 , "description": "Queue is full"}
 
     try:
       ids = {}
@@ -99,13 +101,14 @@ def collect():
         ids[col] = id
         TASKS.append(id)
         executor.submit_stored(id, collect, data)
-        # future_result = future_result.result() # sync
 
         METRICS_DICT['cloudinventario_up'].inc() if executor.futures.done(id) else None
-      return {"status": "success", "task_id": str(ids)}
+      return {"status": "success", "code": 200 , "description": f"IDs: {str(ids)}"}
     except Exception as e: 
       print(traceback.format_exc())
-      return {"status": "error", "exception": str(e)}
+      return {"status": "error", "code": 428, "description": f"Error: {str(e)}"}
+    finally:
+      LOCK.release()
 # curl -X POST -H "Content-Type: application/json" -d '{"collectors": {"aws1": {"module": "amazon-aws","config": {"access_key": "","secret_key": "", "region": "eu-west-1","collect": ["snapshot"]}}}}' http://0.0.0.0:8000/collect
 
 # --- HELPERS METHOD ---
@@ -118,6 +121,18 @@ def doMetrics(future, metrics_dict):
     metrics_dict['cloudinventario_success'].labels(source=future_result[1]['name']).inc()
   else:
     metrics_dict['cloudinventario_error'].labels(source=future_result[1]['name'], stage=future_result[1]['stage']).inc()
+
+def check_tasks():
+  finished_task_id = []
+
+  for task in TASKS:
+    if executor.futures.done(task):
+      finished_task_id.append(task)
+
+      TASKS.remove(task)
+      future = executor.futures.pop(task)
+      doMetrics(future, METRICS_DICT)
+  return finished_task_id
 
 def collect(data):
    config = data['config']
