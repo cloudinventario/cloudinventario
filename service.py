@@ -82,7 +82,7 @@ def collect():
     # Remove tasks, that are finished. Check if queue is full if yes release lock
     check_tasks()
     LOCK.acquire()
-    if len(TASKS) == CONFIG['process']['tasks']:
+    if len(TASKS) >= CONFIG['process']['tasks']:
       LOCK.release()
       return {"status": "error", "code": 429 , "description": "Queue is full"}
 
