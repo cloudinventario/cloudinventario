@@ -54,19 +54,19 @@ def status_job(job_id):
       return {"status": "success", "result": future.result()}
     else:
       return {"status": "pending", "result": "Task is still running"}
-  return {"status": "error", "result": "Task not found"}
+  return {"status": "error", "result": "Task not found or not in queue"}
 # curl -X GET http://0.0.0.0:8000/status/
 
 @app.route("/status")
 def status():
-  finished_task_id = check_tasks()
+  finished_tasks_id = check_tasks()
   result =  {
     "status": "success",
-    "finished_tasks": len(finished_task_id),
+    "finished_tasks": len(finished_tasks_id),
     "not_finished_tasks": len(TASKS),
-    "names_finished_tasks": finished_task_id,
+    "names_finished_tasks": finished_tasks_id,
     "names_not_finished_tasks": TASKS,
-    "ready": True if CONFIG['process']['tasks'] > len(TASKS) else False
+    "ready": True if CONFIG['process']['forks'] > len(TASKS) else False
     }
   logging.info(f"Status about tasks={result}")
   return result
@@ -79,10 +79,10 @@ def collect():
     collector_config['storage'] = CONFIG['storage'] 
     cinv = CloudInventario(collector_config)
 
-    # Remove tasks, that are finished. Check if queue is full if yes release lock
-    check_tasks()
+    # Remove tasks, that are finished and check if queue fit another task
     LOCK.acquire()
-    if len(TASKS) >= CONFIG['process']['tasks']:
+    check_tasks()
+    if len(TASKS) >= CONFIG['process']['forks']:
       LOCK.release()
       return {"status": "error", "code": 429 , "description": "Queue is full"}
 
@@ -103,7 +103,7 @@ def collect():
         executor.submit_stored(id, collect, data)
 
         METRICS_DICT['cloudinventario_up'].inc() if executor.futures.done(id) else None
-      return {"status": "success", "code": 200 , "description": f"IDs: {str(ids)}"}
+      return {"status": "success", "code": 200 , "description": f"Add {len(cinv.collectors)} collectors", "IDs": ids}
     except Exception as e: 
       print(traceback.format_exc())
       return {"status": "error", "code": 428, "description": f"Error: {str(e)}"}
@@ -124,7 +124,6 @@ def doMetrics(future, metrics_dict):
 
 def check_tasks():
   finished_task_id = []
-
   for task in TASKS:
     if executor.futures.done(task):
       finished_task_id.append(task)
@@ -287,7 +286,7 @@ def processesConfig():
     'endpoint_host': args.host if args.host else os.getenv('ENDPOINT_HOST'),
     'endpoint_port': args.port if args.port else os.getenv('ENDPOINT_PORT')
   }
-# export ENDPOINT_PORT=8000 ENDPOINT_HOST=0.0.0.0 PROCESS_FORKS=2 PROCESS_TASKS=1 PROCESS_DIE_AFTER_REQUEST=False STORAGE_DSN=sqlite:///cloudinventory.db SENTRY_LEVEL=40 SENTRY_DSN=https://f27cb7376403487a8d068ca2edaa0863@o1307650.ingest.sentry.io/6552197 SENTRY_ENVIRONMENT=dev SENTRY_TSR=1.0 SENTRY_EVENT_LEVEL=40
+# export ENDPOINT_PORT=8000 ENDPOINT_HOST=0.0.0.0 PROCESS_FORKS=2 PROCESS_TASKS=2 PROCESS_DIE_AFTER_REQUEST=False STORAGE_DSN=sqlite:///cloudinventory.db SENTRY_LEVEL=40 SENTRY_DSN=https://f27cb7376403487a8d068ca2edaa0863@o1307650.ingest.sentry.io/6552197 SENTRY_ENVIRONMENT=dev SENTRY_TSR=1.0 SENTRY_EVENT_LEVEL=40
 
 if __name__ == '__main__':
   # Load config form env and args port/host
