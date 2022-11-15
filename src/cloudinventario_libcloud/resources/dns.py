@@ -1,14 +1,13 @@
-import json, logging, traceback, time
+import json, logging, traceback, time, re
 from pprint import pprint
 
+from libcloud.common.exceptions import BaseHTTPError
 from libcloud.dns.providers import get_driver as dns_get_driver
 
 from cloudinventario.helpers import CloudInvetarioResource
 
-
 def setup(resource, collector):
     return CloudInventarioDNS(resource, collector)
-
 
 class CloudInventarioDNS(CloudInvetarioResource):
 
@@ -36,15 +35,27 @@ class CloudInventarioDNS(CloudInvetarioResource):
 
             for dns in dns_s:
                 # Process record
-                records = self.driver_dns.list_records(dns)
-                for record in records:
-                    data.append(self._process_record(record.__dict__))
+                retry = 0
+                retry_max = 3
+                while retry < retry_max:
+                  retry = retry + 1
+                  try:
+                    records = self.driver_dns.list_records(dns)
+                    for record in records:
+                        data.append(self._process_record(record.__dict__))
 
-                # Process domain/zone
-                data.append(self._process_dns(dns.__dict__))
+                    # Process domain/zone
+                    data.append(self._process_dns(dns.__dict__))
+                    break
+                  except BaseHTTPError as error:
+                    if re.search('Throttling|Rate', error.message, re.IGNORECASE):
+                      time.sleep(3)
+                      if retry < retry_max:
+                        pass
+                      raise
 
                 # Slow down as we make many requests
-                time.sleep(1/4)
+                time.sleep(1/3)
 
             logging.info("Collected {} dns".format(len(data)))
             return data
