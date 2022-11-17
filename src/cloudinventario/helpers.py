@@ -84,6 +84,9 @@ class CloudCollector:
       data = []
       data.extend(self._resource_fetch())
       data.extend(self._fetch(collect))
+      if 'status_error' in self.__dict__:
+        if len(self.status_error) > 0:
+          return {'data': data, 'errors': self.status_error}
       return data
     except Exception as error:
       if not (self.options['check_permission'] and self.check_permission(self.client, error)):
