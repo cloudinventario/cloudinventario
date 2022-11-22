@@ -35,6 +35,7 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
     regions = self.config.get('regions')
     continue_on_error = self.config.get('continue-on-error', False)
 
+    self.status_error = []
     self.creds = []
     self.primary_region = region
 
@@ -61,6 +62,7 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
           if not continue_on_error:
             raise error
           logging.warning(f"Skipping User: {role['account']}")
+          self.status_error.append({'source': self.__dict__['name'], 'status': "error", 'error': f"AccessDenied on User: {role['account']} to perform: {role['role']}"}) #  store_status(self, source, status, runtime=None, error=None):
 
     # create clients
     self.clients = []
@@ -132,7 +134,6 @@ class CloudCollectorAmazonAWSMulti(CloudInvetarioAmazonAWSResource):
         except Exception as e:
           logging.error("Exception while processing account={}".format(client['account_id']))
           raise
-
     return res
 
   def _logout(self):

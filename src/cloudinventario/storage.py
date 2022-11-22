@@ -240,6 +240,14 @@ class InventoryStorage:
      if data is None:
        return False
 
+     # define array of sources_save to save 
+     sources_save = []
+     if type(data) is dict:
+      for error in data['errors']:
+        error['version'] = self.__get_source_version_max(error['source']) + 1
+      sources_save += data['errors']
+      data = data['data']
+
      sources = self.__get_sources_version_max()
 
      # increment versions
@@ -260,7 +268,6 @@ class InventoryStorage:
        source_entries[rec["source_name"]] += 1
 
      # save entry counts
-     sources_save = []
      for source in sources:
        if not source["source"] in source_entries:
          continue
@@ -279,9 +286,8 @@ class InventoryStorage:
 
          data_to_insert[table].append(item)
 
-     if len(sources) == 0:
+     if len(sources_save) == 0:
        return False
-
      # store data
      with self.engine.begin() as conn:
       sources = dict()
