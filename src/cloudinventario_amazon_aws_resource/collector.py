@@ -16,7 +16,7 @@ def setup(name, config, defaults, options):
 class CloudInvetarioAmazonAWSResource(CloudCollector):
 
   def __init__(self, name, config, defaults, options):
-    self.ERRORS = ['AccessDenied', 'UnauthorizedOperation']
+    self.ERRORS = ['AccessDenied', 'UnauthorizedOperation', 'InvalidInstanceType', 'DescribeInstanceTypes']
     super().__init__(name, config, defaults, options)
 
   def check_permission(self, client, error):
