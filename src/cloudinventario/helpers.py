@@ -9,6 +9,7 @@ import dns.exception
 from pprint import pprint
 
 import cloudinventario.platform as platform
+from cloudinventario.limiter import CloudInventarioLimiter
 
 class CloudEncoder(json.JSONEncoder):
   def default(self, z):
@@ -25,6 +26,9 @@ class CloudCollector:
     self.config = config
     self.defaults = {**defaults}
     self.options = {**options}
+
+    self.limiter = CloudInventarioLimiter()
+    self.limiter.add_source(self.name, self.config)
 
     self.allow_self_signed = options.get('allow_self_signed', config.get('allow_self_signed', False))
     self.verify_ssl = self.options.get('verify_ssl_certs', config.get('verify_ssl_certs', True))
@@ -84,6 +88,8 @@ class CloudCollector:
       data = []
       data.extend(self._resource_fetch())
       data.extend(self._fetch(collect))
+
+      data = list(filter(lambda x: x, data))
       if 'status_error' in self.__dict__:
         if len(self.status_error) > 0:
           return {'data': data, 'errors': self.status_error}
@@ -196,6 +202,11 @@ class CloudCollector:
 
       "attributes": None
     }
+
+    check, message = self.limiter.add_counter(self.name, self.config)
+    if not check:
+      logging.warning(message)
+      return None
 
     for key in attr_keys:
       if attrs.get(key):
