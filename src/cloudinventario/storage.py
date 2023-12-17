@@ -202,7 +202,6 @@ class InventoryStorage:
 
    def __get_sources_version_max(self):
      # get active version
-     print(f'')
      res = self.conn.execute(sa.select([
                    self.source_table.c.source,
                    sa.func.max(self.source_table.c.version).label("version")
