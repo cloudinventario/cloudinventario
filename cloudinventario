@@ -139,6 +139,11 @@ def loadPrometheus(config):
 
     return metrics, pushadd, options
 
+def get_resource(runtime_start, proc):
+  runtime = time.time() - runtime_start
+  cpu_usage = proc.cpu_percent()
+  mem_usage = psutil.virtual_memory()[2]
+  return runtime, cpu_usage, mem_usage
 
 # collect
 def collect(data):
@@ -165,9 +170,10 @@ def collect(data):
 
      inventory = cinv.collect(name, options)
 
-     runtime = time.time() - runtime_start
-     cpu_usage = proc.cpu_percent()
-     mem_usage = psutil.virtual_memory()[2]
+    #  runtime = time.time() - runtime_start
+    #  cpu_usage = proc.cpu_percent()
+    #  mem_usage = psutil.virtual_memory()[2]
+     runtime, cpu_usage, mem_usage = get_resource(runtime_start, proc)
 
      if inventory is not None:
         logging.info("storing data for name={}".format(name))
@@ -178,9 +184,7 @@ def collect(data):
         cinv.store_status(name, storage.STATUS_FAIL, runtime)
         logging.info("collector failed name={}".format(name))
    except Exception as e:
-     runtime = time.time() - runtime_start
-     cpu_usage = psutil.cpu_percent(round(runtime))
-     mem_usage = psutil.virtual_memory()[2]
+     runtime, cpu_usage, mem_usage = get_resource(runtime_start, proc)
      trace = traceback.format_exc()
      tb = str(traceback.format_exc()).split('\n')
      for  index, line in enumerate(tb):
