@@ -202,28 +202,28 @@ class InventoryStorage:
 
    def __get_sources_version_max(self):
      # get active version
-     res = self.conn.execute(sa.select([
-                   self.source_table.c.source,
-                   sa.func.max(self.source_table.c.version).label("version")
-                   ])
-     	              .group_by(self.source_table.c.source)
-                    )
-     res = res.fetchall()
-     if res and res[0]['version']:
-       sources = [dict(row) for row in res]
-     else:
-       sources = []
-    #  res = self.conn.execute(sa.select(
+    #  res = self.conn.execute(sa.select([
     #                self.source_table.c.source,
     #                sa.func.max(self.source_table.c.version).label("version")
-    #                )
+    #                ])
     #  	              .group_by(self.source_table.c.source)
     #                 )
     #  res = res.fetchall()
-    #  if res and res[0][1]:
-    #    sources = [{"source": row[0], "version": row[1]} for row in res]
+    #  if res and res[0]['version']:
+    #    sources = [dict(row) for row in res]
     #  else:
     #    sources = []
+     res = self.conn.execute(sa.select(
+                   self.source_table.c.source,
+                   sa.func.max(self.source_table.c.version).label("version")
+                   )
+     	              .group_by(self.source_table.c.source)
+                    )
+     res = res.fetchall()
+     if res and res[0][1]:
+       sources = [{"source": row[0], "version": row[1]} for row in res]
+     else:
+       sources = []
      return sources
 
    def __get_source_version_max(self, name):

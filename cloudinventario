@@ -169,10 +169,6 @@ def collect(data):
      runtime_start = time.time()
 
      inventory = cinv.collect(name, options)
-
-    #  runtime = time.time() - runtime_start
-    #  cpu_usage = proc.cpu_percent()
-    #  mem_usage = psutil.virtual_memory()[2]
      runtime, cpu_usage, mem_usage = get_resource(runtime_start, proc)
 
      if inventory is not None:
