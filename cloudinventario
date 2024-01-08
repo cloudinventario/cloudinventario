@@ -48,8 +48,11 @@ def getArgs():
 
 # loadConfig
 def loadConfig(config_file):
-   with open(config_file) as file:
-       return yaml.safe_load(file)
+   try:
+     return eval(config_file)
+   except:
+    with open(config_file) as file:
+        return yaml.safe_load(file)
    return None
 
 # loadPrometheus
