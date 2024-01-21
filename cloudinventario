@@ -302,6 +302,7 @@ def main(args):
       for res in executor.map(collect, data):
         if type(res) == int:
           if res >= 1:
+            ret = 1
             break
           else:
             ret = res
