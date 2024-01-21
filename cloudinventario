@@ -46,7 +46,6 @@ def getArgs():
    parser.add_argument('--check-permission', action='store_true', default=0,
                        help='If credentials do not have permission for resource, resource will be skipped')
    args = parser.parse_args()
-   print(f"not (args.config or args.json_config) {not (args.config or args.json_config)}")
    if not (args.config or args.json_config):
      parser.error(message='No config was provided. Require Config file or JSON Config string')
    return args
