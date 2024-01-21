@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import concurrent.futures
 import multiprocessing
-import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil, json
+import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil, ast
 from pprint import pprint
 from prometheus_client import Counter, Gauge, CollectorRegistry, pushadd_to_gateway
 
@@ -25,8 +25,8 @@ def getArgs():
    parser = argparse.ArgumentParser(description='CloudInventory args')
    parser.add_argument('-c', '--config', action='store', required=False,
                        help='Config file')
-   parser.add_argument('-jc', '--json-config', action='store', required=False,
-                       help='JSON Config string')
+   parser.add_argument('-sc', '--string-config', action='store', required=False,
+                       help='Config string')
    parser.add_argument('-l', '--list', action='store_true',
                        help='List collectors')
    parser.add_argument('-n', '--name', action='store',
@@ -46,7 +46,7 @@ def getArgs():
    parser.add_argument('--check-permission', action='store_true', default=0,
                        help='If credentials do not have permission for resource, resource will be skipped')
    args = parser.parse_args()
-   if not (args.config or args.json_config):
+   if not (args.config or args.string_config):
      parser.error(message='No config was provided. Require Config file or JSON Config string')
    return args
 
@@ -57,8 +57,8 @@ def loadConfig(config_file):
     return None
 
 # loadJSONConfig
-def loadJSONConfig(config_text):
-    return json.loads(config_text)
+def loadStringConfig(config_text):
+    return ast.literal_eval(config_text)
 
 # loadPrometheus
 def loadPrometheus(config):
@@ -247,8 +247,7 @@ def main(args):
   if args.config:
     config = loadConfig(args.config)
   else:
-    print(f"[+] Config |{args.json_config}|")
-    config = loadJSONConfig(args.json_config)
+    config = loadStringConfig(args.string_config)
   cinv = CloudInventario(config)
   sentryConfig(config, level)
 
