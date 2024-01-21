@@ -301,6 +301,10 @@ def main(args):
       # if at least one succeeded, its SUCCESS
       for res in executor.map(collect, data):
         if type(res) == int:
+          if res >= 1:
+            break
+          else:
+            ret = res
           continue
         METRICS['cloudinventario_cpu_usage'].labels(source=res[1]['name']).set(res[1]['cpu_usage'])
         METRICS['cloudinventario_mem_usage'].labels(source=res[1]['name']).set(res[1]['mem_usage'])
