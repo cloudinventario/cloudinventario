@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import concurrent.futures
 import multiprocessing
-import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil
+import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil, json
 from pprint import pprint
 from prometheus_client import Counter, Gauge, CollectorRegistry, pushadd_to_gateway
 
@@ -23,8 +23,10 @@ import cloudinventario.storage as storage
 # getArgs
 def getArgs():
    parser = argparse.ArgumentParser(description='CloudInventory args')
-   parser.add_argument('-c', '--config', action='store', required=True,
+   parser.add_argument('-c', '--config', action='store', required=False,
                        help='Config file')
+   parser.add_argument('-jc', '--json-config', action='store', required=False,
+                       help='JSON Config string')
    parser.add_argument('-l', '--list', action='store_true',
                        help='List collectors')
    parser.add_argument('-n', '--name', action='store',
@@ -44,16 +46,19 @@ def getArgs():
    parser.add_argument('--check-permission', action='store_true', default=0,
                        help='If credentials do not have permission for resource, resource will be skipped')
    args = parser.parse_args()
+   if not (args.config or args.json_config):
+     argparse.ArgumentParser.error('No config was provided. Require Config file or JSON Config string')
    return args
 
 # loadConfig
 def loadConfig(config_file):
-   try:
-     return eval(config_file)
-   except:
     with open(config_file) as file:
         return yaml.safe_load(file)
-   return None
+    return None
+
+# loadJSONConfig
+def loadJSONConfig(config_text):
+    return json.loads(config_text)
 
 # loadPrometheus
 def loadPrometheus(config):
@@ -239,7 +244,10 @@ def main(args):
   logging.basicConfig(format='%(asctime)s [%(processName)s] [%(levelname)s] %(message)s', level=level)
 
   # parse config
-  config = loadConfig(args.config)
+  if args.config:
+    config = loadConfig(args.config)
+  else:
+    config = loadJSONConfig(args.json_config)
   cinv = CloudInventario(config)
   sentryConfig(config, level)
 
