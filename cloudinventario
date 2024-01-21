@@ -48,7 +48,7 @@ def getArgs():
    args = parser.parse_args()
    print(f"not (args.config or args.json_config) {not (args.config or args.json_config)}")
    if not (args.config or args.json_config):
-     argparse.ArgumentParser.error('No config was provided. Require Config file or JSON Config string')
+     parser.error(message='No config was provided. Require Config file or JSON Config string')
    return args
 
 # loadConfig
