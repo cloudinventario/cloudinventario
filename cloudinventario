@@ -247,6 +247,7 @@ def main(args):
   if args.config:
     config = loadConfig(args.config)
   else:
+    print(f"[+] Config |{args.json_config}|")
     config = loadJSONConfig(args.json_config)
   cinv = CloudInventario(config)
   sentryConfig(config, level)
