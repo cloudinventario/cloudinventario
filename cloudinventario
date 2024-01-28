@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import concurrent.futures
 import multiprocessing
-import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil
+import os, sys, argparse, logging, yaml, asyncio, setproctitle, time, traceback, re, psutil, ast
 from pprint import pprint
 from prometheus_client import Counter, Gauge, CollectorRegistry, pushadd_to_gateway
 
@@ -23,8 +23,10 @@ import cloudinventario.storage as storage
 # getArgs
 def getArgs():
    parser = argparse.ArgumentParser(description='CloudInventory args')
-   parser.add_argument('-c', '--config', action='store', required=True,
+   parser.add_argument('-c', '--config', action='store', required=False,
                        help='Config file')
+   parser.add_argument('-sc', '--string-config', action='store', required=False,
+                       help='Config string')
    parser.add_argument('-l', '--list', action='store_true',
                        help='List collectors')
    parser.add_argument('-n', '--name', action='store',
@@ -44,13 +46,19 @@ def getArgs():
    parser.add_argument('--check-permission', action='store_true', default=0,
                        help='If credentials do not have permission for resource, resource will be skipped')
    args = parser.parse_args()
+   if not (args.config or args.string_config):
+     parser.error(message='No config was provided. Require Config file or JSON Config string')
    return args
 
 # loadConfig
 def loadConfig(config_file):
-   with open(config_file) as file:
-       return yaml.safe_load(file)
-   return None
+    with open(config_file) as file:
+        return yaml.safe_load(file)
+    return None
+
+# loadJSONConfig
+def loadStringConfig(config_text):
+    return ast.literal_eval(config_text)
 
 # loadPrometheus
 def loadPrometheus(config):
@@ -169,10 +177,6 @@ def collect(data):
      runtime_start = time.time()
 
      inventory = cinv.collect(name, options)
-
-    #  runtime = time.time() - runtime_start
-    #  cpu_usage = proc.cpu_percent()
-    #  mem_usage = psutil.virtual_memory()[2]
      runtime, cpu_usage, mem_usage = get_resource(runtime_start, proc)
 
      if inventory is not None:
@@ -240,7 +244,10 @@ def main(args):
   logging.basicConfig(format='%(asctime)s [%(processName)s] [%(levelname)s] %(message)s', level=level)
 
   # parse config
-  config = loadConfig(args.config)
+  if args.config:
+    config = loadConfig(args.config)
+  else:
+    config = loadStringConfig(args.string_config)
   cinv = CloudInventario(config)
   sentryConfig(config, level)
 
@@ -293,6 +300,13 @@ def main(args):
 
       # if at least one succeeded, its SUCCESS
       for res in executor.map(collect, data):
+        if type(res) == int:
+          if res >= 1:
+            ret = 1
+            break
+          else:
+            ret = res
+          continue
         METRICS['cloudinventario_cpu_usage'].labels(source=res[1]['name']).set(res[1]['cpu_usage'])
         METRICS['cloudinventario_mem_usage'].labels(source=res[1]['name']).set(res[1]['mem_usage'])
         METRICS['cloudinventario_runtime'].labels(source=res[1]['name']).set(res[1]['runtime'])
